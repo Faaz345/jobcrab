@@ -1,0 +1,290 @@
+import Link from "next/link";
+import {
+  Zap,
+  Search,
+  FileText,
+  Mail,
+  ArrowRight,
+  Sparkles,
+  Shield,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const features = [
+  {
+    icon: Search,
+    title: "Smart Job Discovery",
+    description:
+      "Search across Naukri, RemoteOK, and Wellfound using natural language. Our AI parses your intent and scrapes multiple job boards simultaneously.",
+    color: "from-blue-500/20 to-cyan-500/20",
+    iconColor: "text-blue-400",
+  },
+  {
+    icon: FileText,
+    title: "AI Resume Tailoring",
+    description:
+      "Upload your base resume and let AI optimize it for each job description. Get ATS match scores, keyword analysis, and downloadable PDFs.",
+    color: "from-purple-500/20 to-pink-500/20",
+    iconColor: "text-purple-400",
+  },
+  {
+    icon: Mail,
+    title: "Cold Email Outreach",
+    description:
+      "Generate personalized outreach emails with AI. Built-in safety controls: dry-run mode, volume caps, and full audit trails.",
+    color: "from-amber-500/20 to-orange-500/20",
+    iconColor: "text-amber-400",
+  },
+];
+
+const benefits = [
+  {
+    icon: Sparkles,
+    title: "AI-Powered",
+    description: "Groq & DeepSeek LLMs tailor every resume and email to perfection.",
+  },
+  {
+    icon: Shield,
+    title: "Safety First",
+    description: "Dry-run mode, volume caps, and human review before every email send.",
+  },
+  {
+    icon: BarChart3,
+    title: "Track Everything",
+    description: "Kanban pipeline from discovery to offer. Never lose track of an application.",
+  },
+];
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <Zap className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-bold">JobCrab</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/register">Get Started</Link>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute left-1/4 top-20 h-[500px] w-[500px] rounded-full bg-blue-500/8 blur-3xl" />
+          <div className="absolute right-1/4 top-40 h-[400px] w-[400px] rounded-full bg-purple-500/8 blur-3xl" />
+        </div>
+
+        <div className="mx-auto max-w-6xl px-6 pb-20 pt-24 text-center">
+          {/* Badge */}
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            Powered by Groq & DeepSeek AI
+          </div>
+
+          {/* Heading */}
+          <h1 className="mx-auto max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+            Your AI-Powered{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Job Application
+            </span>{" "}
+            Command Center
+          </h1>
+
+          {/* Subheading */}
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
+            Discover jobs from multiple boards, tailor your resume for each
+            role, and send personalized cold emails — all from one unified
+            platform.
+          </p>
+
+          {/* CTA buttons */}
+          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Button size="lg" className="px-8 text-base" asChild>
+              <Link href="/register">
+                Start Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-8 text-base"
+              asChild
+            >
+              <Link href="/login">Sign in to existing account</Link>
+            </Button>
+          </div>
+
+          {/* Stats */}
+          <div className="mx-auto mt-16 grid max-w-lg grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-foreground">3</div>
+              <div className="text-sm text-muted-foreground">Job Sources</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-foreground">AI</div>
+              <div className="text-sm text-muted-foreground">Resume Scoring</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-foreground">∞</div>
+              <div className="text-sm text-muted-foreground">Applications</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section className="border-t border-border/50 bg-muted/20 py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Three engines. One platform.
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Everything you need to go from &quot;job searching&quot; to &quot;offer accepted&quot;
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="group rounded-xl border border-border/50 bg-card p-8 transition-all duration-300 hover:border-border hover:shadow-lg hover:shadow-black/5"
+              >
+                <div
+                  className={`mb-6 inline-flex rounded-xl bg-gradient-to-br ${feature.color} p-3`}
+                >
+                  <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                </div>
+                <h3 className="mb-3 text-xl font-semibold">{feature.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              How it works
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Three steps to your dream job — all AI-assisted
+            </p>
+          </div>
+
+          <div className="grid gap-12 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                title: "Discover",
+                description:
+                  "Type what you're looking for in plain English. We scrape Naukri, RemoteOK, and Wellfound in real-time.",
+              },
+              {
+                step: "02",
+                title: "Tailor",
+                description:
+                  "Pick a job, and AI rewrites your resume to match the JD — optimizing keywords, skills, and experience bullets.",
+              },
+              {
+                step: "03",
+                title: "Outreach",
+                description:
+                  "Generate a personalized cold email, preview it, and send — with safety guards at every step.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
+                  {item.step}
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Benefits ── */}
+      <section className="border-t border-border/50 bg-muted/20 py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-8 md:grid-cols-3">
+            {benefits.map((benefit) => (
+              <div
+                key={benefit.title}
+                className="flex items-start gap-4 rounded-xl p-6"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <benefit.icon className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{benefit.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {benefit.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="py-24">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Ready to supercharge your job search?
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Join JobCrab today and let AI do the heavy lifting.
+          </p>
+          <Button size="lg" className="mt-8 px-10 text-base" asChild>
+            <Link href="/register">
+              Get Started — It&apos;s Free
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-border/50 py-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Zap className="h-4 w-4" />
+            <span>JobCrab © {new Date().getFullYear()}</span>
+          </div>
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="/login" className="hover:text-foreground">
+              Sign in
+            </Link>
+            <Link href="/register" className="hover:text-foreground">
+              Register
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

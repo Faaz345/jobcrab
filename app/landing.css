@@ -1,0 +1,448 @@
+/*
+ * landing.css — JobCrab landing page styles
+ *
+ * Palette: Warm beige (#F5F0E8) + Crab Red (#C0392B) + deep charcoal
+ * Aesthetic: Claude-inspired minimalism — generous whitespace, restrained
+ * typography, warm tones, no visual noise.
+ */
+
+/* ── Tokens ─────────────────────────────────────────────────────────── */
+
+.landing-page {
+  --l-bg: #F5F0E8;
+  --l-bg-alt: #EDE7DB;
+  --l-bg-warm: #E8E0D0;
+  --l-fg: #1A1A1A;
+  --l-fg-muted: #6B6560;
+  --l-fg-subtle: #9A938A;
+  --l-accent: #C0392B;
+  --l-accent-hover: #A93226;
+  --l-accent-soft: rgba(192, 57, 43, 0.08);
+  --l-border: rgba(0, 0, 0, 0.08);
+  --l-border-strong: rgba(0, 0, 0, 0.12);
+  --l-radius: 10px;
+  --l-font: "Geist", system-ui, -apple-system, sans-serif;
+
+  font-family: var(--l-font);
+  background: var(--l-bg);
+  color: var(--l-fg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────── */
+
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(245, 240, 232, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--l-border);
+}
+
+.landing-nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.landing-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--l-fg);
+}
+
+.landing-logo-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.landing-logo-text {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.landing-nav-link {
+  font-size: 14px;
+  color: var(--l-fg-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.landing-nav-link:hover {
+  color: var(--l-fg);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--l-accent);
+  border: none;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.landing-btn-primary:hover {
+  background: var(--l-accent-hover);
+}
+.landing-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.landing-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--l-fg);
+  background: transparent;
+  border: 1px solid var(--l-border-strong);
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.landing-btn-secondary:hover {
+  border-color: var(--l-fg-subtle);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.landing-btn-lg {
+  padding: 12px 28px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+
+.landing-hero {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.landing-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 80px 24px 0;
+  text-align: center;
+}
+
+.landing-tagline {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--l-accent);
+  margin-bottom: 28px;
+}
+
+.landing-heading {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--l-fg);
+  margin: 0;
+}
+
+.landing-heading-accent {
+  color: var(--l-accent);
+}
+
+.landing-subheading {
+  margin-top: 24px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--l-fg-muted);
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-hero-actions {
+  margin-top: 36px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Canvas ───────────────────────────────────────────────────────────── */
+
+.landing-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-canvas {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70vh;
+  opacity: 0.35;
+}
+
+.landing-canvas-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, var(--l-bg), transparent);
+  z-index: 2;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+
+.landing-section {
+  padding: 96px 0;
+  border-top: 1px solid var(--l-border);
+}
+
+.landing-section-alt {
+  background: var(--l-bg-alt);
+}
+
+.landing-section-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.landing-section-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.landing-section-label {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--l-accent);
+  margin-bottom: 12px;
+}
+
+.landing-section-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--l-fg);
+  margin: 0;
+}
+
+.landing-section-desc {
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--l-fg-muted);
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Metaphor cards ──────────────────────────────────────────────────── */
+
+.landing-metaphor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .landing-metaphor-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.landing-metaphor-card {
+  background: var(--l-bg);
+  border: 1px solid var(--l-border);
+  border-radius: var(--l-radius);
+  padding: 28px 24px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.landing-metaphor-card:hover {
+  border-color: var(--l-border-strong);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.landing-metaphor-step {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--l-accent);
+  margin-bottom: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-metaphor-crab-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--l-accent-soft);
+  border-radius: 7px;
+  margin-bottom: 18px;
+}
+
+.landing-metaphor-crab-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--l-accent);
+}
+
+.landing-metaphor-crab-desc {
+  font-size: 12px;
+  color: var(--l-fg-subtle);
+  line-height: 1.4;
+}
+
+.landing-metaphor-human-title {
+  font-size: 18px;
+  font-weight: 650;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.landing-metaphor-human-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--l-fg-muted);
+  margin: 0;
+}
+
+/* ── Benefits grid ───────────────────────────────────────────────────── */
+
+.landing-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .landing-benefits-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing-benefit-card {
+  padding: 20px;
+  border-radius: var(--l-radius);
+  background: var(--l-bg);
+  border: 1px solid var(--l-border);
+  transition: border-color 0.2s;
+}
+.landing-benefit-card:hover {
+  border-color: var(--l-border-strong);
+}
+
+.landing-benefit-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.landing-benefit-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--l-fg-muted);
+  margin: 0;
+}
+
+/* ── CTA ─────────────────────────────────────────────────────────────── */
+
+.landing-cta-section {
+  background: var(--l-bg);
+}
+
+.landing-cta-inner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-cta-emoji {
+  font-size: 48px;
+  margin-bottom: 20px;
+  line-height: 1;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.landing-footer {
+  border-top: 1px solid var(--l-border);
+  padding: 32px 0;
+}
+
+.landing-footer-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.landing-footer-brand {
+  font-size: 13px;
+  color: var(--l-fg-subtle);
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.landing-footer-links a {
+  font-size: 13px;
+  color: var(--l-fg-subtle);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.landing-footer-links a:hover {
+  color: var(--l-fg);
+}

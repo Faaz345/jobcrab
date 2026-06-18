@@ -1,0 +1,249 @@
+// Job Application Platform — Database Schema
+// Matches architecture.md §5.1 Entity Relationship Diagram
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Enums ──
+
+enum SubscriptionTier {
+  free
+  pro
+}
+
+enum ScrapeStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+enum ApplicationStatus {
+  discovered
+  resume_tailored
+  email_drafted
+  email_sent
+  response_received
+  interview
+  offer
+  rejected
+  withdrawn
+}
+
+enum EmailStatus {
+  drafted
+  sent
+  skipped
+  failed
+}
+
+enum AuditEntityType {
+  job
+  resume
+  email
+  application
+}
+
+enum AuditAction {
+  created
+  updated
+  sent
+  skipped
+  failed
+}
+
+// ── Models ──
+
+model User {
+  // id matches Supabase auth.users UUID
+  id                       String    @id
+  email                    String    @unique
+  name                     String?
+  passwordHash             String?   @map("password_hash")
+  avatarUrl                String?   @map("avatar_url")
+  smtpCredentialsEncrypted String?   @map("smtp_credentials_encrypted") @db.Text
+  apiKeysEncrypted         String?   @map("api_keys_encrypted") @db.Text
+  tier                     SubscriptionTier @default(free)
+
+  // Outreach safety settings
+  dryRunEnabled            Boolean  @default(true) @map("dry_run_enabled")
+  maxEmailsPerDay          Int      @default(10) @map("max_emails_per_day")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  baseResumes    BaseResume[]
+  scrapeSessions ScrapeSession[]
+  jobListings    JobListing[]
+  applications   Application[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model BaseResume {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  rawText   String   @map("raw_text") @db.Text
+  filePath  String?  @map("file_path")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tailoredResumes TailoredResume[]
+
+  @@index([userId])
+  @@map("base_resumes")
+}
+
+model ScrapeSession {
+  id           String       @id @default(uuid())
+  userId       String       @map("user_id")
+  query        String
+  sources      String[]     // e.g. ["naukri", "remoteok", "wellfound"]
+  status       ScrapeStatus @default(pending)
+  totalResults Int          @default(0) @map("total_results")
+  startedAt    DateTime     @default(now()) @map("started_at")
+  completedAt  DateTime?    @map("completed_at")
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobListings JobListing[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("scrape_sessions")
+}
+
+model JobListing {
+  id              String   @id @default(uuid())
+  scrapeSessionId String   @map("scrape_session_id")
+  userId          String   @map("user_id")
+  title           String
+  company         String
+  location        String?
+  salaryRange     String?  @map("salary_range")
+  description     String   @db.Text
+  url             String
+  source          String   // "naukri" | "remoteok" | "wellfound"
+  companyLogoUrl  String?  @map("company_logo_url")
+  tags            String[]
+  isBookmarked    Boolean  @default(false) @map("is_bookmarked")
+  postedAt        DateTime? @map("posted_at")
+  scrapedAt       DateTime @default(now()) @map("scraped_at")
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scrapeSession   ScrapeSession     @relation(fields: [scrapeSessionId], references: [id], onDelete: Cascade)
+  applications    Application[]
+  tailoredResumes TailoredResume[]
+  outreachEmails  OutreachEmail[]
+
+  @@index([userId])
+  @@index([scrapeSessionId])
+  @@index([source])
+  @@index([isBookmarked])
+  @@map("job_listings")
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  userId       String            @map("user_id")
+  jobListingId String            @map("job_listing_id")
+  status       ApplicationStatus @default(discovered)
+  notes        String?           @db.Text
+  isAutoApplied Boolean          @default(false) @map("is_auto_applied")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobListing      JobListing       @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  tailoredResumes TailoredResume[]
+  outreachEmails  OutreachEmail[]
+
+  @@unique([userId, jobListingId])
+  @@index([userId])
+  @@index([status])
+  @@index([jobListingId])
+  @@map("applications")
+}
+
+model TailoredResume {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  baseResumeId   String   @map("base_resume_id")
+  jobListingId   String   @map("job_listing_id")
+  tailoredText   String   @map("tailored_text") @db.Text
+  changesSummary Json?    @map("changes_summary")
+  pdfPath        String?  @map("pdf_path")
+  atsScore       Float?   @map("ats_score")
+  llmModelUsed   String?  @map("llm_model_used")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  application    Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  baseResume     BaseResume      @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+  jobListing     JobListing      @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  outreachEmails OutreachEmail[]
+
+  @@index([applicationId])
+  @@index([jobListingId])
+  @@map("tailored_resumes")
+}
+
+model OutreachEmail {
+  id               String      @id @default(uuid())
+  applicationId    String      @map("application_id")
+  jobListingId     String      @map("job_listing_id")
+  tailoredResumeId String?     @map("tailored_resume_id")
+  recipientEmail   String      @map("recipient_email")
+  recipientName    String?     @map("recipient_name")
+  subject          String
+  bodyHtml         String      @map("body_html") @db.Text
+  bodyPlain        String      @map("body_plain") @db.Text
+  status           EmailStatus @default(drafted)
+  isDryRun         Boolean     @default(true) @map("is_dry_run")
+  smtpMessageId    String?     @map("smtp_message_id")
+  errorMessage     String?     @map("error_message") @db.Text
+  sentAt           DateTime?   @map("sent_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  application    Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobListing     JobListing      @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  tailoredResume TailoredResume?  @relation(fields: [tailoredResumeId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([jobListingId])
+  @@index([status])
+  @@map("outreach_emails")
+}
+
+model AuditLog {
+  id         String          @id @default(uuid())
+  userId     String          @map("user_id")
+  entityType AuditEntityType @map("entity_type")
+  entityId   String          @map("entity_id")
+  action     AuditAction
+  metadata   Json?
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
