@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase/server";
-import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { z } from "zod";
+import { complete } from "@/lib/services/llm-service";
 const pdfParse = require("pdf-parse");
 
 export async function POST(request: Request) {
@@ -27,21 +25,49 @@ export async function POST(request: Request) {
     const pdfData = await pdfParse(buffer);
     const text = pdfData.text;
 
-    // Use AI to extract structured data
-    const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
-      schema: z.object({
-        title: z.string().describe("The person's current or target job title"),
-        experience: z.number().describe("Total years of experience (number)"),
-        location: z.string().describe("Current location or 'Remote'"),
-        education: z.string().describe("A summary string of their education and degrees"),
-        skills: z.string().describe("A comma-separated string of their top skills"),
-        workHistory: z.string().describe("A summary of their recent 1-2 work experiences and achievements"),
-      }),
-      prompt: `Extract the following resume details from this text. If a field is missing, make your best guess or return an empty string/0.\n\nResume Text:\n${text.substring(0, 5000)}`,
+    // Use custom LLM service to extract structured data
+    const prompt = `Extract the following resume details from this text and return ONLY a JSON object with these exact keys:
+- "title": string (Current or target job title)
+- "experience": number (Total years of experience)
+- "location": string (Current location or 'Remote')
+- "education": string (A summary of education and degrees)
+- "skills": string (A comma-separated string of top skills)
+- "workHistory": string (A summary of recent 1-2 work experiences and achievements)
+
+If a field is missing, make your best guess or return an empty string/0.
+
+Resume Text:
+${text.substring(0, 5000)}`;
+
+    const response = await complete({
+      messages: [
+        { role: "system", content: "You are an expert resume parser. Always return valid JSON." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.1,
+      responseFormat: { type: "json_object" }
     });
 
-    return NextResponse.json(object);
+    let parsed;
+    try {
+      let content = response.content.trim();
+      if (content.startsWith("\`\`\`")) {
+        content = content.replace(/^\`\`\`(?:json)?\n?/, "").replace(/\n?\`\`\`$/, "");
+      }
+      parsed = JSON.parse(content);
+    } catch (e) {
+      console.error("Failed to parse LLM JSON output", response.content);
+      throw new Error("Invalid JSON from LLM");
+    }
+
+    return NextResponse.json({
+      title: parsed.title || "",
+      experience: typeof parsed.experience === "number" ? parsed.experience : parseInt(parsed.experience || "0"),
+      location: parsed.location || "",
+      education: parsed.education || "",
+      skills: parsed.skills || "",
+      workHistory: parsed.workHistory || ""
+    });
   } catch (error: any) {
     console.error("Error parsing resume:", error);
     return NextResponse.json(
