@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  try {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -56,6 +57,10 @@ export async function middleware(request: NextRequest) {
   }
 
   return supabaseResponse;
+  } catch (error) {
+    console.error("Middleware crash error:", error);
+    return NextResponse.next();
+  }
 }
 
 export const config = {
