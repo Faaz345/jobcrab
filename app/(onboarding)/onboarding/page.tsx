@@ -1,21 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, UploadCloud, FileText } from "lucide-react";
+import { Loader2, UploadCloud, FileText, X, Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
 
+const POPULAR_SKILLS = [
+  "React", "Node.js", "TypeScript", "Python", "Java", "C++", "AWS", "Docker", "Kubernetes", "SQL", "NoSQL", "GraphQL", "Figma", "UI/UX", "Marketing", "SEO", "Sales", "Project Management"
+];
+
+const POPULAR_EDUCATION = [
+  "B.S. Computer Science", "B.A. Business Administration", "M.S. Data Science", "High School Diploma", "Associate Degree", "Bootcamp Graduate"
+];
+
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0); // Step 0: Upload Resume or Manual
+  const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   
@@ -23,10 +31,14 @@ export default function OnboardingPage() {
     title: "",
     experience: "",
     location: "",
-    education: "",
-    skills: "",
     workHistory: "",
   });
+
+  const [skillsChips, setSkillsChips] = useState<string[]>([]);
+  const [customSkill, setCustomSkill] = useState("");
+
+  const [eduChips, setEduChips] = useState<string[]>([]);
+  const [customEdu, setCustomEdu] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -56,12 +68,19 @@ export default function OnboardingPage() {
         title: parsedData.title || "",
         experience: parsedData.experience ? parsedData.experience.toString() : "",
         location: parsedData.location || "",
-        education: parsedData.education || "",
-        skills: parsedData.skills || "",
         workHistory: parsedData.workHistory || "",
       });
+
+      if (parsedData.skills) {
+        setSkillsChips(parsedData.skills.split(",").map((s: string) => s.trim()).filter(Boolean));
+      }
+      if (parsedData.education) {
+        // Just throw the whole education string as one chip to start, or let them split it
+        setEduChips([parsedData.education.trim()].filter(Boolean));
+      }
+
       toast.success("Resume parsed successfully!");
-      setStep(1); // Move to review step
+      setStep(1);
     } catch (error) {
       console.error(error);
       toast.error("Failed to parse resume. You can enter details manually.");
@@ -80,10 +99,16 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const finalData = {
+        ...formData,
+        skills: skillsChips.join(", "),
+        education: eduChips.join(" | "),
+      };
+
       const res = await fetch("/api/onboarding/generate-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(finalData),
       });
 
       if (!res.ok) throw new Error("Failed to generate resume");
@@ -98,21 +123,32 @@ export default function OnboardingPage() {
     }
   };
 
+  const addSkill = (skill: string) => {
+    if (skill.trim() && !skillsChips.includes(skill.trim())) {
+      setSkillsChips([...skillsChips, skill.trim()]);
+    }
+    setCustomSkill("");
+  };
+
+  const removeSkill = (skill: string) => {
+    setSkillsChips(skillsChips.filter((s) => s !== skill));
+  };
+
+  const addEdu = (edu: string) => {
+    if (edu.trim() && !eduChips.includes(edu.trim())) {
+      setEduChips([...eduChips, edu.trim()]);
+    }
+    setCustomEdu("");
+  };
+
+  const removeEdu = (edu: string) => {
+    setEduChips(eduChips.filter((e) => e !== edu));
+  };
+
   const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 50 : -50,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 50 : -50,
-      opacity: 0,
-    }),
+    enter: (direction: number) => ({ x: direction > 0 ? 50 : -50, opacity: 0 }),
+    center: { zIndex: 1, x: 0, opacity: 1 },
+    exit: (direction: number) => ({ zIndex: 0, x: direction < 0 ? 50 : -50, opacity: 0 }),
   };
 
   return (
@@ -129,32 +165,15 @@ export default function OnboardingPage() {
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="min-h-[400px] flex flex-col justify-center relative">
+        <CardContent className="min-h-[450px] flex flex-col justify-center relative">
           <AnimatePresence mode="wait" custom={1}>
             {step === 0 && (
-              <motion.div
-                key="step0"
-                initial="enter"
-                animate="center"
-                exit="exit"
-                variants={slideVariants}
-                transition={{ duration: 0.3 }}
-                className="space-y-6 w-full"
-              >
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
-                    isDragActive ? "border-primary bg-primary/5" : "border-zinc-300 hover:border-primary/50 hover:bg-zinc-50"
-                  }`}
-                >
+              <motion.div key="step0" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-zinc-300 hover:border-primary/50 hover:bg-zinc-50"}`}>
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center justify-center space-y-4">
                     <div className="p-4 bg-primary/10 rounded-full">
-                      {isParsing ? (
-                        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                      ) : (
-                        <UploadCloud className="h-8 w-8 text-primary" />
-                      )}
+                      {isParsing ? <Loader2 className="h-8 w-8 text-primary animate-spin" /> : <UploadCloud className="h-8 w-8 text-primary" />}
                     </div>
                     {isParsing ? (
                       <div>
@@ -169,16 +188,10 @@ export default function OnboardingPage() {
                     )}
                   </div>
                 </div>
-
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-zinc-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">Or</span>
-                  </div>
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-200" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-muted-foreground">Or</span></div>
                 </div>
-
                 <div className="flex justify-center">
                   <Button variant="outline" onClick={() => setStep(1)} className="w-full max-w-sm h-12">
                     <FileText className="mr-2 h-4 w-4" /> Enter details manually
@@ -188,146 +201,129 @@ export default function OnboardingPage() {
             )}
 
             {step === 1 && (
-              <motion.div
-                key="step1"
-                initial="enter"
-                animate="center"
-                exit="exit"
-                variants={slideVariants}
-                transition={{ duration: 0.3 }}
-                className="space-y-6 w-full"
-              >
+              <motion.div key="step1" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
                 <div className="space-y-3">
                   <Label htmlFor="title" className="text-base">Current / Target Job Title</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    className="h-12 text-lg"
-                    placeholder="e.g. Frontend Developer"
-                    value={formData.title}
-                    onChange={handleChange}
-                  />
+                  <Input id="title" name="title" className="h-12 text-lg" placeholder="e.g. Frontend Developer" value={formData.title} onChange={handleChange} />
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="experience" className="text-base">Years of Experience</Label>
-                  <Input
-                    id="experience"
-                    name="experience"
-                    type="number"
-                    className="h-12 text-lg"
-                    placeholder="e.g. 3"
-                    value={formData.experience}
-                    onChange={handleChange}
-                  />
+                  <Input id="experience" name="experience" type="number" className="h-12 text-lg" placeholder="e.g. 3" value={formData.experience} onChange={handleChange} />
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="location" className="text-base">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    className="h-12 text-lg"
-                    placeholder="e.g. New York, Remote"
-                    value={formData.location}
-                    onChange={handleChange}
-                  />
+                  <Input id="location" name="location" className="h-12 text-lg" placeholder="e.g. New York, Remote" value={formData.location} onChange={handleChange} />
                 </div>
               </motion.div>
             )}
 
             {step === 2 && (
-              <motion.div
-                key="step2"
-                initial="enter"
-                animate="center"
-                exit="exit"
-                variants={slideVariants}
-                transition={{ duration: 0.3 }}
-                className="space-y-6 w-full"
-              >
-                <div className="space-y-3">
-                  <Label htmlFor="education" className="text-base">Education / Degree</Label>
-                  <Textarea
-                    id="education"
-                    name="education"
-                    className="min-h-[150px] text-base resize-y"
-                    placeholder="e.g. B.S. Computer Science, University of XYZ, 2020. Relevant Coursework: Data Structures..."
-                    value={formData.education}
-                    onChange={handleChange}
-                  />
+              <motion.div key="step2" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
+                <div className="space-y-4">
+                  <Label className="text-base">Education & Degrees</Label>
+                  
+                  {/* Selected Education (Draggable) */}
+                  <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-h-[100px]">
+                    {eduChips.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No education added yet. Click below or add custom.</p>
+                    ) : (
+                      <Reorder.Group axis="y" values={eduChips} onReorder={setEduChips} className="space-y-2">
+                        {eduChips.map((edu) => (
+                          <Reorder.Item key={edu} value={edu} className="flex items-center justify-between bg-white border border-zinc-200 px-3 py-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing">
+                            <div className="flex items-center gap-2">
+                              <GripVertical className="h-4 w-4 text-zinc-400" />
+                              <span className="text-sm font-medium">{edu}</span>
+                            </div>
+                            <button onClick={() => removeEdu(edu)} className="text-zinc-400 hover:text-red-500 transition-colors"><X className="h-4 w-4" /></button>
+                          </Reorder.Item>
+                        ))}
+                      </Reorder.Group>
+                    )}
+                  </div>
+
+                  {/* Add Custom Education */}
+                  <div className="flex gap-2">
+                    <Input value={customEdu} onChange={(e) => setCustomEdu(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addEdu(customEdu))} placeholder="Add custom degree or school..." className="flex-1" />
+                    <Button variant="secondary" onClick={() => addEdu(customEdu)}><Plus className="h-4 w-4" /></Button>
+                  </div>
+
+                  {/* Word Bank */}
+                  <div className="pt-4 border-t border-zinc-100">
+                    <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Quick Add</p>
+                    <div className="flex flex-wrap gap-2">
+                      {POPULAR_EDUCATION.filter(e => !eduChips.includes(e)).map(e => (
+                        <button key={e} onClick={() => addEdu(e)} className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 bg-white hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                          + {e}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
 
             {step === 3 && (
-              <motion.div
-                key="step3"
-                initial="enter"
-                animate="center"
-                exit="exit"
-                variants={slideVariants}
-                transition={{ duration: 0.3 }}
-                className="space-y-6 w-full"
-              >
-                <div className="space-y-3">
-                  <Label htmlFor="skills" className="text-base">Top Skills & Tools</Label>
-                  <Textarea
-                    id="skills"
-                    name="skills"
-                    className="min-h-[150px] text-base resize-y"
-                    placeholder="e.g. React, TypeScript, Node.js, TailwindCSS, AWS, Docker..."
-                    value={formData.skills}
-                    onChange={handleChange}
-                  />
+              <motion.div key="step3" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
+                <div className="space-y-4">
+                  <Label className="text-base">Top Skills & Tools</Label>
+                  
+                  {/* Selected Skills (Draggable) */}
+                  <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-h-[120px]">
+                    {skillsChips.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">No skills added yet. Click below or add custom.</p>
+                    ) : (
+                      <Reorder.Group axis="x" values={skillsChips} onReorder={setSkillsChips} className="flex flex-wrap gap-2">
+                        {skillsChips.map((skill) => (
+                          <Reorder.Item key={skill} value={skill} className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full shadow-sm cursor-grab active:cursor-grabbing text-sm font-medium">
+                            <GripVertical className="h-3 w-3 opacity-50" />
+                            {skill}
+                            <button onClick={() => removeSkill(skill)} className="hover:text-red-500 transition-colors ml-1"><X className="h-3 w-3" /></button>
+                          </Reorder.Item>
+                        ))}
+                      </Reorder.Group>
+                    )}
+                  </div>
+
+                  {/* Add Custom Skill */}
+                  <div className="flex gap-2">
+                    <Input value={customSkill} onChange={(e) => setCustomSkill(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSkill(customSkill))} placeholder="Type a skill and press Enter..." className="flex-1" />
+                    <Button variant="secondary" onClick={() => addSkill(customSkill)}>Add</Button>
+                  </div>
+
+                  {/* Word Bank */}
+                  <div className="pt-4 border-t border-zinc-100">
+                    <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Popular Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                      {POPULAR_SKILLS.filter(s => !skillsChips.includes(s)).map(s => (
+                        <button key={s} onClick={() => addSkill(s)} className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 bg-white hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                          + {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
 
             {step === 4 && (
-              <motion.div
-                key="step4"
-                initial="enter"
-                animate="center"
-                exit="exit"
-                variants={slideVariants}
-                transition={{ duration: 0.3 }}
-                className="space-y-6 w-full"
-              >
+              <motion.div key="step4" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
                 <div className="space-y-3">
                   <Label htmlFor="workHistory" className="text-base">Recent Work History</Label>
-                  <Textarea
-                    id="workHistory"
-                    name="workHistory"
-                    placeholder="Briefly describe your last 1-2 roles and key achievements. e.g. 'Software Engineer at ABC Corp: Increased page load speed by 30%...'"
-                    className="min-h-[250px] text-base resize-y"
-                    value={formData.workHistory}
-                    onChange={handleChange}
-                  />
+                  <Textarea id="workHistory" name="workHistory" placeholder="Briefly describe your last 1-2 roles and key achievements. e.g. 'Software Engineer at ABC Corp: Increased page load speed by 30%...'" className="min-h-[250px] text-base resize-y" value={formData.workHistory} onChange={handleChange} />
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </CardContent>
         <CardFooter className="flex justify-between border-t border-zinc-100 bg-zinc-50/50 p-6">
-          <Button variant="outline" onClick={handleBack} disabled={step === 0 || isSubmitting || isParsing}>
-            Back
-          </Button>
+          <Button variant="outline" onClick={handleBack} disabled={step === 0 || isSubmitting || isParsing}>Back</Button>
           {step > 0 && step < 4 ? (
-            <Button onClick={handleNext} disabled={!formData.title && step === 1}>
-              Next Step
-            </Button>
+            <Button onClick={handleNext} disabled={!formData.title && step === 1}>Next Step</Button>
           ) : step === 4 ? (
             <Button onClick={handleSubmit} disabled={isSubmitting} className="min-w-[200px]">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Finalizing...
-                </>
-              ) : (
-                "Generate Resume & Finish"
-              )}
+              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Finalizing...</> : "Generate Resume & Finish"}
             </Button>
-          ) : (
-            <div /> // Placeholder for step 0
-          )}
+          ) : <div />}
         </CardFooter>
       </Card>
     </div>
