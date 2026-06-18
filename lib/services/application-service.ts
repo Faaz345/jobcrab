@@ -151,6 +151,24 @@ export async function getStats(userId: string) {
   const responded = apps.filter((a) => respondedStatuses.includes(a.status)).length;
   const responseRate = emailsSent > 0 ? Number((responded / emailsSent).toFixed(2)) : 0;
 
+  // Applications over time (last 14 days)
+  const applications_over_time = [];
+  for (let i = 13; i >= 0; i--) {
+    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().split("T")[0];
+    const count = apps.filter((a) => a.createdAt.toISOString().split("T")[0] === dateStr).length;
+    applications_over_time.push({ date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }), count });
+  }
+
+  // Average ATS Score
+  const resumes = await prisma.tailoredResume.findMany({
+    where: { application: { userId } },
+    select: { atsScore: true },
+  });
+  const avgAts = resumes.length > 0 
+    ? Math.round(resumes.reduce((acc, r) => acc + (r.atsScore || 0), 0) / resumes.length)
+    : 0;
+
   return {
     total: apps.length,
     by_status: byStatus,
@@ -158,6 +176,8 @@ export async function getStats(userId: string) {
     this_week: thisWeek,
     emails_sent: emailsSent,
     response_rate: responseRate,
+    applications_over_time,
+    average_ats_score: avgAts,
   };
 }
 

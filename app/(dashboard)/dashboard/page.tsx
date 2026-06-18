@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { AnalyticsCharts } from "@/components/dashboard/analytics-charts";
+import { AdvancedAnalytics } from "@/components/dashboard/advanced-analytics";
 import { StatsSkeleton } from "@/components/shared/loading-skeletons";
 
 const activityIcon = (entityType: string) => {
@@ -75,7 +76,10 @@ export default function DashboardHome() {
               </CardContent>
             </Card>
           ) : (
-            <AnalyticsCharts byStatus={stats.by_status} bySource={stats.by_source} />
+            <>
+              <AnalyticsCharts byStatus={stats.by_status} bySource={stats.by_source} />
+              <AdvancedAnalytics stats={stats} isPro={stats.user_tier === "pro"} />
+            </>
           )}
 
           <Card className="border-border/50">

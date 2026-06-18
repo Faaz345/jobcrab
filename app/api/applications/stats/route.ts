@@ -8,5 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const stats = await getStats(user.id);
-  return NextResponse.json(stats);
+  return NextResponse.json({
+    ...stats,
+    user_tier: user.user_metadata?.tier || "free",
+  });
 }
