@@ -44,6 +44,11 @@ const navItems = [
     icon: Briefcase,
   },
   {
+    label: "Pricing",
+    href: "/dashboard/pricing",
+    icon: Zap,
+  },
+  {
     label: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
@@ -69,8 +74,13 @@ export function Sidebar() {
   const userInitial = userName.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {
+    // Client-side sign out
     const supabase = createClient();
     await supabase.auth.signOut();
+    
+    // Server-side sign out (clears cookies properly)
+    await fetch("/api/auth/logout", { method: "POST" });
+    
     router.push("/login");
     router.refresh();
   };

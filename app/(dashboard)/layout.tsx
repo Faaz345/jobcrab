@@ -3,11 +3,29 @@ import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-export default function DashboardLayout({
+import { getUser } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db/prisma";
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isOnboarded: true },
+  });
+
+  if (!dbUser?.isOnboarded) {
+    redirect("/onboarding");
+  }
+
   return (
     <TooltipProvider>
       <div className="flex min-h-screen">

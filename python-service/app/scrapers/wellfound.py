@@ -1,253 +1,210 @@
 """
-Wellfound scraper (ported from the proven job-scrapper project).
+Wellfound scraper (async Playwright).
 
-Uses Firecrawl to render the Wellfound role page, then parses job cards from
-the returned markdown. Adapted to the async FastAPI interface.
+Migrated from Firecrawl to Playwright to bypass Cloudflare/JS challenges.
+Uses Playwright's async API with anti-detection flags.
 """
 
 import re
-import html
-import logging
 import asyncio
+import logging
 
 from app.scrapers.base import BaseScraper, ParsedQuery, RawJobListing
 from app.scrapers.matching import title_matches_role
-from app.config import settings
 
 logger = logging.getLogger(__name__)
-_BASE_URL = "https://wellfound.com"
 
+_BASE_URL = "https://wellfound.com"
+_PAGE_DELAY_MS = 2000
 
 def _slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
 
-
 def _clean_loc(value: str) -> str:
-    # Replace any non-ASCII separator glyphs (bullets / mojibake) with " - "
     value = "".join((ch if ord(ch) < 128 else " - ") for ch in value)
     return re.sub(r"\s+", " ", value).strip(" -")
-
 
 class WellfoundScraper(BaseScraper):
     source_name = "wellfound"
 
     async def scrape(self, query: ParsedQuery, limit: int = 20, pages: int = 1):
-        return await asyncio.to_thread(self._scrape_sync, query, limit)
+        import asyncio as _asyncio
+        import sys as _sys
 
-    def _scrape_sync(self, query: ParsedQuery, limit: int):
-        if not settings.FIRECRAWL_API_KEY:
-            print("[Wellfound] FIRECRAWL_API_KEY not set. Skipping.")
-            return []
+        def _runner():
+            if _sys.platform == "win32":
+                loop = _asyncio.ProactorEventLoop()
+            else:
+                loop = _asyncio.new_event_loop()
+            _asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(self._scrape_async(query, limit))
+            finally:
+                loop.close()
+
+        return await _asyncio.to_thread(_runner)
+
+    async def _scrape_async(self, query: ParsedQuery, limit: int = 20):
         try:
-            client = self._client()
-        except Exception as exc:
-            print(f"[Wellfound] client error: {exc}")
+            from playwright.async_api import async_playwright, Error as PlaywrightError
+        except ImportError:
+            print("[Wellfound] Playwright not installed. Skipping.")
             return []
 
         job_title = query.role
         location = query.location
         url = self._build_url(job_title, location)
+        
+        all_listings: list[RawJobListing] = []
+        
         try:
-            response = client.scrape_url(url, formats=["markdown", "links"],
-                                         wait_for=5000, timeout=60000)
+            async with async_playwright() as pw:
+                browser = await self._launch(pw, PlaywrightError)
+                context = await browser.new_context(
+                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/126.0.0.0 Safari/537.36"),
+                    viewport={"width": 1366, "height": 768},
+                    locale="en-US",
+                )
+                try:
+                    page = await context.new_page()
+                    await page.add_init_script(
+                        "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
+                        "Object.defineProperty(navigator,'plugins',{get:()=>[1,2,3]});"
+                        "Object.defineProperty(navigator,'languages',{get:()=>['en-US','en']});"
+                        "window.chrome={runtime:{}};"
+                    )
+                    
+                    print(f"[Wellfound] scraping url: {url}")
+                    resp = await page.goto(url, timeout=45000)
+                    
+                    if resp and resp.status == 403:
+                        print("[Wellfound] 403 Forbidden (JS challenge failed or IP blocked).")
+                        return []
+                        
+                    await page.wait_for_timeout(3000)
+                    
+                    # Try to extract job listings
+                    raw_jobs = await page.evaluate(
+                        """
+                        () => {
+                            const jobs = [];
+                            // Wellfound uses various classes for job listings, often looking for anchor tags with /jobs/
+                            const jobLinks = Array.from(document.querySelectorAll('a[href*="/jobs/"]'));
+                            
+                            // Deduplicate by URL
+                            const uniqueLinks = [...new Map(jobLinks.map(item => [item.href, item])).values()];
+                            
+                            for (const link of uniqueLinks) {
+                                // Walk up the DOM to find the container card
+                                let card = link.closest('div.styles_result__XXXX') || link.closest('div[class*="component"]') || link.parentElement.parentElement;
+                                
+                                const title = link.textContent.trim();
+                                if (!title || title.length < 3) continue;
+                                
+                                // Try to find company name near the job link
+                                let companyEl = card.querySelector('a[href*="/company/"]');
+                                const company = companyEl ? companyEl.textContent.trim() : "Unknown Company";
+                                
+                                const url = link.href;
+                                
+                                jobs.push({
+                                    title,
+                                    company,
+                                    url,
+                                    location: "Remote", // Defaulting to remote
+                                    salary: "",
+                                    description: title + " at " + company
+                                });
+                            }
+                            return jobs;
+                        }
+                        """
+                    )
+                    
+                    for j in raw_jobs:
+                        if title_matches_role(j.get("title", ""), job_title):
+                            all_listings.append(RawJobListing(
+                                title=j.get("title", ""),
+                                company=j.get("company", ""),
+                                location=j.get("location") or "Remote",
+                                salary_range=j.get("salary") or None,
+                                description=(j.get("description") or "")[:5000],
+                                url=j.get("url", ""),
+                                source=self.source_name,
+                                company_logo_url=None,
+                                tags=[],
+                                posted_at=None,
+                            ))
+                            
+                    all_listings = all_listings[:limit]
+                    
+                    # Enrich descriptions by visiting individual job pages
+                    await self._enrich_descriptions(page, all_listings)
+                    
+                finally:
+                    await browser.close()
         except Exception as exc:
-            print(f"[Wellfound] Firecrawl request failed: {exc}")
-            return []
+            print(f"[Wellfound] error: {exc}")
 
-        data = self._to_dict(response)
-        markdown = data.get("markdown") or ""
-        jobs = self._parse_markdown(markdown)
-        jobs = [j for j in jobs if title_matches_role(str(j.get("title") or ""), job_title)]
-        jobs = jobs[:limit]
-        # Enrich each job with its full "About the job" description from the
-        # detail page (the role listing only carries a short snippet).
-        for j in jobs:
+        logger.info("Wellfound: %s jobs for %r", len(all_listings), job_title)
+        print(f"[Wellfound] returned {len(all_listings)} jobs")
+        return all_listings
+
+    async def _launch(self, pw, PlaywrightError):
+        args = ["--disable-blink-features=AutomationControlled", "--no-sandbox"]
+        try:
+            return await pw.chromium.launch(channel="chrome", headless=True, args=args)
+        except PlaywrightError as exc:
+            print(f"[Wellfound] Chrome channel unavailable ({exc}); trying bundled Chromium.")
             try:
-                self._enrich_description(client, j)
+                return await pw.chromium.launch(headless=True, args=args)
+            except PlaywrightError as exc2:
+                raise RuntimeError(
+                    "Wellfound needs Google Chrome or a Playwright browser. "
+                    "Install Chrome, or run: python -m playwright install chromium. "
+                    f"({exc2})"
+                ) from exc2
+
+    async def _enrich_descriptions(self, page, listings):
+        """Visit each job's detail page to capture the full Job Description."""
+        for lst in listings:
+            if not lst.url:
+                continue
+            try:
+                await page.goto(lst.url, timeout=30000)
+                await page.wait_for_timeout(2000)
+                
+                # Check for "About the role" or "About the job" headers
+                jd = await page.evaluate("""
+                    () => {
+                        const headers = Array.from(document.querySelectorAll('h2, h3, h4'));
+                        const aboutHeader = headers.find(h => 
+                            h.textContent.toLowerCase().includes('about the role') || 
+                            h.textContent.toLowerCase().includes('about the job') ||
+                            h.textContent.toLowerCase().includes('responsibilities')
+                        );
+                        
+                        if (aboutHeader && aboutHeader.parentElement) {
+                            return aboutHeader.parentElement.innerText;
+                        }
+                        
+                        // Fallback: just grab the main body
+                        const main = document.querySelector('main');
+                        return main ? main.innerText : document.body.innerText;
+                    }
+                """)
+                
+                if jd and len(jd.strip()) > len((lst.description or "")):
+                    lst.description = jd.strip()[:8000]
             except Exception as exc:
-                print(f"[Wellfound] JD fetch failed: {exc}")
-        listings = [self._to_listing(j) for j in jobs if j.get("title") and j.get("company")]
-        logger.info("Wellfound: %s jobs for %r", len(listings), job_title)
-        return listings
-
-    def _enrich_description(self, client, job):
-        url = str(job.get("url") or "").strip()
-        if not url:
-            return
-        resp = client.scrape_url(url, formats=["markdown"], wait_for=5000, timeout=60000)
-        md = self._to_dict(resp).get("markdown") or ""
-        if not md:
-            return
-        about = self._extract_about(md)
-        if about and len(about) > len(str(job.get("description") or "")):
-            job["description"] = about[:8000]
-
-    @staticmethod
-    def _extract_about(markdown: str) -> str:
-        """Pull the 'About the job' section out of a Wellfound job page."""
-        import re as _re
-        lower = markdown.lower()
-        start = lower.find("about the job")
-        if start < 0:
-            start = lower.find("about the role")
-        if start < 0:
-            return ""
-        chunk = markdown[start:]
-        # Stop at the next major section heading if present
-        for marker in ("\n## ", "\nAbout the company", "\nApply", "\nMeet your"):
-            idx = chunk.find(marker, 5)
-            if idx > 0:
-                chunk = chunk[:idx]
-                break
-        # Drop the leading heading line itself
-        chunk = _re.sub(r"^about the (?:job|role)\s*", "", chunk, flags=_re.IGNORECASE).strip()
-        chunk = _re.sub(r"\n{3,}", "\n\n", chunk)
-        return chunk.strip()
-
-    def _client(self):
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            try:
-                from firecrawl import V1FirecrawlApp
-                return V1FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
-            except ImportError:
-                from firecrawl import FirecrawlApp
-                return FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
+                print(f"[Wellfound] JD fetch failed for {lst.url[:60]}: {exc}")
+                continue
 
     @staticmethod
     def _build_url(job_title, location):
         slug = _slugify(job_title)
-        # Wellfound: /role/r/<role> is the remote/role search; /role/l/<role>/<city>
-        # is the location-scoped page.
         if location and location.lower() != "remote":
             return f"{_BASE_URL}/role/l/{slug}/{_slugify(location)}"
         return f"{_BASE_URL}/role/r/{slug}"
-
-    def _parse_markdown(self, markdown):
-        if not markdown:
-            return []
-        lines = [ln.strip() for ln in markdown.splitlines()]
-        jobs = []
-        company = ""
-        company_logo = ""
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            # Wellfound emits two lines per company that both link to
-            # /company/<slug>:
-            #   1) a logo line:  [![<Company> company logo](<logo_url>)](.../company/...)
-            #   2) a name line:  [**<Company>**](.../company/...)
-            # We capture the logo from the logo line and the name from the bold
-            # line, keying the logo to whichever company we are currently on.
-            if "wellfound.com/company/" in line:
-                logo_m = re.search(r"!\[[^\]]*\]\((?P<img>https?://[^)]+)\)", line)
-                if logo_m:
-                    company_logo = logo_m.group("img").strip()
-                bold_m = re.search(r"\*\*(?P<c>.+?)\*\*", line)
-                logoname_m = re.search(r"!\[(?P<c>[^\]]+?)\s+company logo\]", line)
-                if bold_m:
-                    company = html.unescape(bold_m.group("c")).strip()
-                    i += 1
-                    continue
-                if logoname_m:
-                    company = html.unescape(logoname_m.group("c")).strip()
-                    i += 1
-                    continue
-                i += 1
-                continue
-            jm = re.match(r"^\[(?P<t>[^\]]+)\]\((?P<u>https://wellfound\.com/jobs/[^)]*)\)", line)
-            if not jm:
-                i += 1
-                continue
-            title = html.unescape(jm.group("t")).strip()
-            url = jm.group("u").strip()
-            detail = []
-            c = i + 1
-            while c < len(lines):
-                nl = lines[c]
-                # Stop at the next company block (either the bold-name line OR
-                # the logo line) so the next company's logo is parsed by the
-                # outer loop instead of being swallowed as a detail line.
-                if "wellfound.com/company/" in nl:
-                    break
-                if re.match(r"^\[[^\]]+\]\(https://wellfound\.com/jobs/", nl):
-                    break
-                if nl:
-                    detail.append(html.unescape(nl))
-                c += 1
-            jobs.append({
-                "title": title,
-                "company": company,
-                "company_logo_url": company_logo,
-                "location": self._loc(detail),
-                "salary": self._salary(detail),
-                "description": self._desc(detail),
-                "url": url,
-            })
-            i = c
-        return jobs
-
-    @staticmethod
-    def _has_currency(text):
-        t = text.lower()
-        return ("$" in text or "\u20b9" in text or "\u20ac" in text or "\u00a3" in text
-                or "rs " in t or "inr" in t)
-
-    def _salary(self, lines):
-        for ln in lines:
-            if self._has_currency(ln):
-                return ln.strip()
-        return ""
-
-    def _loc(self, lines):
-        skip = re.compile(r"(full-time|contract|internship|founder|years?\s+of\s+exp|save|apply)", re.I)
-        date = re.compile(r"^(?:today|yesterday|\d+\s*(?:day|days|week|weeks|month|months|year|years)\s+ago)", re.I)
-        for ln in lines:
-            s = ln.strip()
-            if not s or self._has_currency(s) or skip.search(s) or date.search(s):
-                continue
-            return s
-        return ""
-
-    def _desc(self, lines):
-        out = []
-        for ln in lines:
-            t = ln.replace("Save", "").replace("Apply", "").strip()
-            if not t or self._has_currency(t):
-                continue
-            if re.search(r"^(?:today|yesterday|\d+\s*(?:day|week|month|year)s?\s+ago)", t, re.I):
-                continue
-            out.append(_clean_loc(t))
-        return " / ".join(out[:4])
-
-    def _to_listing(self, job):
-        url = str(job.get("url") or "").strip()
-        if url and not url.startswith("http"):
-            url = f"{_BASE_URL}{url}" if url.startswith("/") else f"{_BASE_URL}/{url}"
-        return RawJobListing(
-            title=str(job.get("title") or "").strip(),
-            company=str(job.get("company") or "").strip(),
-            company_logo_url=(str(job.get("company_logo_url") or "").strip() or None),
-            location=_clean_loc(str(job.get("location") or "").strip()) or "Remote",
-            salary_range=str(job.get("salary") or "").strip() or None,
-            description=str(job.get("description") or "").strip()[:5000],
-            url=url or _BASE_URL,
-            source=self.source_name,
-            tags=[],
-            posted_at=None,
-        )
-
-    @staticmethod
-    def _to_dict(response):
-        if isinstance(response, dict):
-            return response
-        for attr in ("model_dump", "dict"):
-            if hasattr(response, attr):
-                try:
-                    return getattr(response, attr)()
-                except Exception:
-                    pass
-        if hasattr(response, "__dict__"):
-            return dict(vars(response))
-        return {}

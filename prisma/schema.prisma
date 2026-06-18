@@ -75,6 +75,7 @@ model User {
   // Outreach safety settings
   dryRunEnabled            Boolean  @default(true) @map("dry_run_enabled")
   maxEmailsPerDay          Int      @default(10) @map("max_emails_per_day")
+  isOnboarded              Boolean  @default(false) @map("is_onboarded")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
