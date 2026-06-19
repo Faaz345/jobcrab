@@ -137,7 +137,7 @@ export function JobSearchForm({
 
           {/* Number of jobs to search */}
           <div className="space-y-3">
-            <Label className="text-sm">Number of jobs to fetch (per source)</Label>
+            <Label className="text-sm">Total number of jobs to fetch (divided equally among sources)</Label>
             <div className="flex flex-wrap gap-2">
               {LIMIT_OPTIONS.map((opt) => (
                 <button
