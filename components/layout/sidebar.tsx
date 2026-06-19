@@ -53,12 +53,13 @@ const navItems = [
   },
 ];
 
-function SidebarItem({ item, isActive }: { item: any; isActive: boolean }) {
+function SidebarItem({ item, isActive, onClick }: { item: any; isActive: boolean; onClick?: () => void }) {
   const iconRef = useRef<any>(null);
 
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       onMouseEnter={() => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => iconRef.current?.stopAnimation?.()}
       className={cn(
@@ -74,7 +75,7 @@ function SidebarItem({ item, isActive }: { item: any; isActive: boolean }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState("User");
@@ -106,7 +107,10 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar">
+    <aside className={cn(
+      "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar transition-transform duration-300 ease-in-out lg:translate-x-0",
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    )}>
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-border px-6">
         <Link href="/">
@@ -121,7 +125,7 @@ export function Sidebar() {
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
-          return <SidebarItem key={item.href} item={item} isActive={isActive} />;
+          return <SidebarItem key={item.href} item={item} isActive={isActive} onClick={onClose} />;
         })}
       </nav>
 

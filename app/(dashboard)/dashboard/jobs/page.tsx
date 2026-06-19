@@ -67,14 +67,16 @@ export default function JobsPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Job Discovery</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Search across multiple job boards using AI-powered natural language queries
           </p>
         </div>
-        <PreviousSearches onSelectSession={handleSelectSession} />
+        <div className="shrink-0">
+          <PreviousSearches onSelectSession={handleSelectSession} />
+        </div>
       </div>
 
       <ScraperStatusBanner />

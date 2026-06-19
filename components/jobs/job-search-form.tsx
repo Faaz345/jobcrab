@@ -105,7 +105,7 @@ export function JobSearchForm({
           {/* Source selection */}
           <div className="space-y-3">
             <Label className="text-sm">Job Sources</Label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {SOURCES.map((source) => (
                 <label
                   key={source.id}
