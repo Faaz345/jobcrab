@@ -13,7 +13,9 @@ import { FolderIcon } from "@/components/icons/folder";
 import { ZapIcon } from "@/components/icons/zap";
 import { SettingsIcon } from "@/components/icons/settings";
 import { LogoutIcon } from "@/components/icons/logout";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const navItems = [
   {
@@ -53,29 +55,43 @@ const navItems = [
   },
 ];
 
-function SidebarItem({ item, isActive, onClick }: { item: any; isActive: boolean; onClick?: () => void }) {
+function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: any; isActive: boolean; isCollapsed: boolean; onClick?: () => void }) {
   const iconRef = useRef<any>(null);
 
-  return (
+  const content = (
     <Link
       href={item.href}
       onClick={onClick}
       onMouseEnter={() => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => iconRef.current?.stopAnimation?.()}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+        "flex items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-200",
+        isCollapsed ? "justify-center px-0" : "gap-3 px-3",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
           : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
       )}
     >
       <item.icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
-      {item.label}
+      {!isCollapsed && <span className="truncate">{item.label}</span>}
     </Link>
   );
+
+  if (isCollapsed) {
+    return (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent side="right" className="ml-2">
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return content;
 }
 
-export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
+export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse }: { isOpen?: boolean; onClose?: () => void; isCollapsed?: boolean; onToggleCollapse?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState("User");
@@ -108,13 +124,20 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar transition-transform duration-300 ease-in-out lg:translate-x-0",
-      isOpen ? "translate-x-0" : "-translate-x-full"
+      "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 ease-in-out lg:translate-x-0",
+      isOpen ? "translate-x-0" : "-translate-x-full",
+      isCollapsed ? "w-[72px]" : "w-64"
     )}>
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-border px-6">
+      <div className={cn("flex h-16 items-center border-b border-border overflow-hidden whitespace-nowrap", isCollapsed ? "justify-center px-0" : "px-6")}>
         <Link href="/">
-          <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 w-auto object-contain scale-[1.75] origin-left" />
+          {isCollapsed ? (
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden">
+              <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 min-w-[160px] object-cover object-left" />
+            </div>
+          ) : (
+            <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 w-auto object-contain scale-[1.75] origin-left" />
+          )}
         </Link>
       </div>
 
@@ -125,33 +148,63 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
-          return <SidebarItem key={item.href} item={item} isActive={isActive} onClick={onClose} />;
+          return <SidebarItem key={item.href} item={item} isActive={isActive} isCollapsed={isCollapsed} onClick={onClose} />;
         })}
       </nav>
 
+      {/* Collapse Toggle */}
+      <div className="p-3 hidden lg:block">
+        <button
+          onClick={onToggleCollapse}
+          className="flex w-full items-center justify-center rounded-lg border border-border/50 bg-background/50 py-2 text-muted-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground hover:border-sidebar-accent-foreground/20 shadow-sm"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      </div>
+
       {/* User Footer */}
-      <div className="border-t border-border p-4">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+      <div className="border-t border-border p-2">
+        <div className={cn("flex items-center rounded-lg", isCollapsed ? "flex-col gap-3 justify-center py-2" : "gap-3 px-3 py-2")}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
             {userInitial}
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-medium text-foreground">
-              {userName}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {userEmail}
-            </p>
-          </div>
-          <button
-            onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
-            onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
-            onClick={handleSignOut}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            title="Sign out"
-          >
-            <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
-          </button>
+          {!isCollapsed && (
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-sm font-medium text-foreground">
+                {userName}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {userEmail}
+              </p>
+            </div>
+          )}
+          
+          {isCollapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
+                  onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
+                  onClick={handleSignOut}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
+                >
+                  <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="ml-2">Sign out</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
+              onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
+              onClick={handleSignOut}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
+              title="Sign out"
+            >
+              <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
     </aside>

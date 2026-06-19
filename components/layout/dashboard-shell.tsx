@@ -6,6 +6,7 @@ import { Header } from "./header";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -18,10 +19,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col lg:ml-64 w-full min-w-0">
+      <div 
+        className={`flex flex-1 flex-col w-full min-w-0 transition-[margin] duration-300 ease-in-out ${
+          isCollapsed ? "lg:ml-[72px]" : "lg:ml-64"
+        }`}
+      >
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full">{children}</main>
       </div>
