@@ -152,8 +152,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-zinc-200/50 backdrop-blur-sm overflow-hidden">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-2xl shadow-xl border-[#E8E0D4] bg-[#F3EDE4]/50 backdrop-blur-md overflow-hidden">
         <CardHeader className="text-center relative pb-2">
           <div className="flex justify-center mb-4">
             <Image src="/images/logo.png" alt="JobCrab Logo" width={300} height={80} className="h-16 w-auto object-contain scale-150" />
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
             )}
           </AnimatePresence>
         </CardContent>
-        <CardFooter className="flex justify-between border-t border-zinc-100 bg-zinc-50/50 p-6">
+        <CardFooter className="flex justify-between border-t border-[#E8E0D4] bg-[#F3EDE4]/80 p-6">
           <Button variant="outline" onClick={handleBack} disabled={step === 0 || isSubmitting || isParsing}>Back</Button>
           {step > 0 && step < 4 ? (
             <Button onClick={handleNext} disabled={!formData.title && step === 1}>Next Step</Button>

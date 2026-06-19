@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase/server";
 import { complete } from "@/lib/services/llm-service";
-const pdfParse = require("pdf-parse");
+const PDFParser = require("pdf2json");
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +17,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Convert File to Buffer for pdf-parse
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text from PDF
-    const pdfData = await pdfParse(buffer);
-    const text = pdfData.text;
+    // Extract text from PDF using pdf2json
+    const text = await new Promise<string>((resolve, reject) => {
+      const pdfParser = new PDFParser(null, 1);
+      pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
+      pdfParser.on("pdfParser_dataReady", () => {
+        resolve(pdfParser.getRawTextContent());
+      });
+      pdfParser.parseBuffer(buffer);
+    });
 
     // Use custom LLM service to extract structured data
     const prompt = `Extract the following resume details from this text and return ONLY a JSON object with these exact keys:
