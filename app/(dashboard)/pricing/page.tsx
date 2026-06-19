@@ -45,8 +45,10 @@ export default function PricingPage() {
       const order = await orderRes.json();
 
       // 2. Open Razorpay Checkout
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummy", // fallback for UI testing
+        key: rzpKey || "rzp_test_dummy",
         amount: order.amount,
         currency: order.currency,
         name: "JobCrab",
@@ -85,6 +87,19 @@ export default function PricingPage() {
           },
         },
       };
+
+      if (!rzpKey) {
+        // Dummy Flow when keys aren't set
+        toast.info("Test Mode: Simulating successful Razorpay payment...");
+        setTimeout(() => {
+          options.handler({
+            razorpay_payment_id: "pay_dummy_" + Date.now(),
+            razorpay_order_id: order.id,
+            razorpay_signature: "dummy_signature_bypass",
+          });
+        }, 1500);
+        return;
+      }
 
       const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", function (response: any) {
