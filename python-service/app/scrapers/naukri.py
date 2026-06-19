@@ -42,9 +42,29 @@ class NaukriScraper(BaseScraper):
                 loop = _asyncio.new_event_loop()
             _asyncio.set_event_loop(loop)
             try:
-                return loop.run_until_complete(self._scrape_async(query, limit, pages))
+                print("[Naukri] Trying Playwright scraper...")
+                results = loop.run_until_complete(self._scrape_async(query, limit, pages))
+                if results:
+                    return results
+                print("[Naukri] Playwright returned no results.")
+            except Exception as e:
+                print(f"[Naukri] Playwright failed: {e}")
             finally:
-                loop.close()
+                try:
+                    loop.close()
+                except Exception:
+                    pass
+                
+            from app.config import settings
+            if settings.FIRECRAWL_API_KEY:
+                print("[Naukri] Falling back to Firecrawl...")
+                try:
+                    return self._scrape_firecrawl(query, limit)
+                except Exception as e:
+                    print(f"[Naukri] Firecrawl failed: {e}")
+            else:
+                print("[Naukri] Firecrawl API key missing. Cannot run fallback.")
+            return []
 
         return await _asyncio.to_thread(_runner)
 
@@ -216,3 +236,119 @@ class NaukriScraper(BaseScraper):
                 posted_at=None,
             ))
         return listings
+
+    def _scrape_firecrawl(self, query: ParsedQuery, limit: int = 20):
+        from firecrawl import FirecrawlApp
+        from app.config import settings
+        import html as _html
+        
+        job_title = query.role
+        location = query.location
+        url = self._build_url(job_title, 1, location)
+        
+        print(f"[Naukri Firecrawl] Scraping url: {url}")
+        app = FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
+        resp = app.scrape_url(url, formats=["markdown"], timeout=60000)
+        
+        res_dict = {}
+        if isinstance(resp, dict):
+            res_dict = resp
+        elif hasattr(resp, "model_dump"):
+            res_dict = resp.model_dump()
+        elif hasattr(resp, "dict"):
+            res_dict = resp.dict()
+        elif hasattr(resp, "__dict__"):
+            res_dict = vars(resp)
+            
+        markdown = res_dict.get("markdown") or ""
+        if not markdown:
+            print("[Naukri Firecrawl] Returned empty markdown.")
+            return []
+            
+        jobs = self._parse_markdown(markdown)
+        jobs = jobs[:limit]
+        
+        listings = []
+        for job in jobs:
+            listings.append(RawJobListing(
+                title=job.get("title", "").strip(),
+                company=job.get("company", "").strip(),
+                company_logo_url=(job.get("company_logo_url", "").strip() or None),
+                location=job.get("location", "").strip() or "Remote",
+                salary_range=job.get("salary", "").strip() or None,
+                description=job.get("description", "").strip()[:5000],
+                url=job.get("url", "") or _BASE_URL,
+                source=self.source_name,
+                tags=job.get("skills") or [],
+                posted_at=None,
+            ))
+            
+        print(f"[Naukri Firecrawl] Returned {len(listings)} jobs.")
+        return listings
+
+    def _parse_markdown(self, markdown: str):
+        import html as _html
+        if not markdown:
+            return []
+            
+        lines = [ln.strip() for ln in markdown.splitlines()]
+        jobs = []
+        
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            jm = re.match(r"^##\s+\[(?P<t>[^\]]+)\]\((?P<u>https://www\.naukri\.com/[^)]+)\)", line)
+            if not jm:
+                i += 1
+                continue
+                
+            title = _html.unescape(jm.group("t")).strip()
+            url = jm.group("u").strip()
+            company = ""
+            company_logo = ""
+            location = ""
+            description = ""
+            skills = []
+            
+            c = i + 1
+            while c < len(lines):
+                nl = lines[c]
+                if nl.startswith("## ["):
+                    break
+                
+                logo_m = re.match(r"^!\[\]\((?P<img>https://img\.naukimg\.com/[^)]+)\)", nl)
+                if logo_m:
+                    company_logo = logo_m.group("img")
+                    c += 1
+                    continue
+                
+                comp_m = re.match(r"^\[(?P<c>[^\]]+)\]\(https://www\.naukri\.com/[^)]+\)", nl)
+                if comp_m and not company:
+                    company = _html.unescape(comp_m.group("c")).strip()
+                    c += 1
+                    continue
+                    
+                if nl.startswith("Responsibilities") or len(nl) > 50:
+                    description = nl
+                    
+                if "Yrs" in nl and not location:
+                    loc_idx = nl.find("Yrs") + 3
+                    location = nl[loc_idx:].strip()
+                
+                if nl.startswith("- "):
+                    skills.append(nl[2:].strip())
+                    
+                c += 1
+                
+            jobs.append({
+                "title": title,
+                "url": url,
+                "company": company,
+                "company_logo_url": company_logo,
+                "location": location,
+                "description": description,
+                "skills": skills,
+            })
+            i = c
+            
+        return jobs
