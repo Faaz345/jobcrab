@@ -45,10 +45,10 @@ export async function GET(req: NextRequest) {
     const lastJob = await prisma.jobListing.findFirst({
       where: { userId: user.id },
       orderBy: { scrapedAt: 'desc' },
-      select: { sessionId: true }
+      select: { scrapeSessionId: true }
     });
-    if (lastJob?.sessionId) {
-      where.sessionId = lastJob.sessionId;
+    if (lastJob?.scrapeSessionId) {
+      where.scrapeSessionId = lastJob.scrapeSessionId;
     }
   }
 
