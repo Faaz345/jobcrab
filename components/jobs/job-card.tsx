@@ -40,6 +40,17 @@ const sourceColors: Record<string, string> = {
   wellfound: "bg-purple-500/15 text-purple-400 border-purple-500/30",
 };
 
+const decodeHTML = (str: string) => {
+  if (!str) return str;
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#039;/g, "'");
+};
+
 export function JobCard({ job, onBookmark }: JobCardProps) {
   const sourceStyle = sourceColors[job.source] || "bg-muted text-muted-foreground";
 
@@ -97,13 +108,13 @@ export function JobCard({ job, onBookmark }: JobCardProps) {
               href={`/dashboard/jobs/${job.id}`}
               className="text-base font-semibold leading-tight text-foreground hover:text-primary transition-colors line-clamp-2"
             >
-              {job.title}
+              {decodeHTML(job.title)}
             </Link>
 
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{job.company}</span>
+                <span className="truncate">{decodeHTML(job.company)}</span>
               </span>
               {job.location && (
                 <span className="flex items-center gap-1.5">

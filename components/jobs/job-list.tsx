@@ -132,13 +132,13 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         {/* Text search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Filter by title, company, or location..."
-            className="pl-10"
+            className="pl-10 w-full"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -154,7 +154,7 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
 
         {/* Source filter */}
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <Filter className="mr-2 h-3.5 w-3.5" />
             <SelectValue placeholder="Source" />
           </SelectTrigger>
@@ -172,7 +172,7 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
           variant={bookmarkedOnly ? "default" : "outline"}
           size="sm"
           onClick={() => setBookmarkedOnly(!bookmarkedOnly)}
-          className="gap-2"
+          className="w-full sm:w-auto gap-2"
         >
           <Bookmark className="h-3.5 w-3.5" />
           Bookmarked
