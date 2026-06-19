@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { CheckCircle, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CrabIcon } from "@/components/icons/crab";
 
 interface ScrapeProgressProps {
   sessionId: string;
@@ -121,9 +122,7 @@ export function ScrapeProgress({
                   ease: "easeOut",
                 }}
               />
-              <span className="text-[14px] relative z-10" role="img" aria-label="crab">
-                🦀
-              </span>
+              <CrabIcon className="w-[14px] h-[14px] text-primary relative z-10" />
             </div>
 
             {/* Changing Text */}
