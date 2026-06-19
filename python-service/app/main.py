@@ -41,7 +41,7 @@ app.add_middleware(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "service": "scraping-service", "version": "0.1.0"}
+    return {"status": "ok", "service": "scraping-service", "version": "0.1.1-testing-scrapers"}
 
 
 @app.get("/")
