@@ -64,6 +64,7 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
       if (searchText) params.set("search", searchText);
       if (sourceFilter !== "all") params.set("source", sourceFilter);
       if (bookmarkedOnly) params.set("bookmarked", "true");
+      else params.set("latestSession", "true"); // Only show latest session if not looking for bookmarked jobs
       params.set("limit", "50");
 
       const res = await fetch(`/api/jobs?${params}`);
@@ -103,6 +104,21 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
       setJobs((prev) =>
         prev.map((j) => (j.id === id ? { ...j, isBookmarked: !isBookmarked } : j))
       );
+    }
+  }
+
+  // Handle delete
+  async function handleDelete(id: string) {
+    // Optimistic update
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+
+    try {
+      await fetch(`/api/jobs/${id}`, {
+        method: "DELETE",
+      });
+    } catch {
+      // Refresh to restore if failed
+      fetchJobs();
     }
   }
 
@@ -208,7 +224,7 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
               <AccordionContent>
                 <div className="grid gap-4 md:grid-cols-2 pt-2 pb-4">
                   {sourceJobs.map((job) => (
-                    <JobCard key={job.id} job={job} onBookmark={handleBookmark} />
+                    <JobCard key={job.id} job={job} onBookmark={handleBookmark} onDelete={handleDelete} />
                   ))}
                 </div>
               </AccordionContent>

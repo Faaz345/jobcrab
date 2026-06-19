@@ -40,6 +40,18 @@ export async function GET(req: NextRequest) {
     ];
   }
 
+  const latestSession = searchParams.get("latestSession") === "true";
+  if (latestSession) {
+    const lastJob = await prisma.jobListing.findFirst({
+      where: { userId: user.id },
+      orderBy: { scrapedAt: 'desc' },
+      select: { sessionId: true }
+    });
+    if (lastJob?.sessionId) {
+      where.sessionId = lastJob.sessionId;
+    }
+  }
+
   const [jobs, total] = await Promise.all([
     prisma.jobListing.findMany({
       where: where as any,

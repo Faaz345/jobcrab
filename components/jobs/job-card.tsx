@@ -11,6 +11,7 @@ import {
   DollarSign,
   FileText,
   Mail,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
@@ -32,6 +33,7 @@ interface JobCardProps {
     scrapedAt: string;
   };
   onBookmark: (id: string, isBookmarked: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 const sourceColors: Record<string, string> = {
@@ -51,7 +53,7 @@ const decodeHTML = (str: string) => {
     .replace(/&#039;/g, "'");
 };
 
-export function JobCard({ job, onBookmark }: JobCardProps) {
+export function JobCard({ job, onBookmark, onDelete }: JobCardProps) {
   const sourceStyle = sourceColors[job.source] || "bg-muted text-muted-foreground";
 
   const [isApplying, setIsApplying] = useState(false);
@@ -131,18 +133,34 @@ export function JobCard({ job, onBookmark }: JobCardProps) {
             </div>
           </div>
 
-          {/* Bookmark */}
-          <button
-            onClick={() => onBookmark(job.id, !job.isBookmarked)}
-            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title={job.isBookmarked ? "Unbookmark" : "Bookmark"}
-          >
-            {job.isBookmarked ? (
-              <BookmarkCheck className="h-5 w-5 text-amber-400" />
-            ) : (
-              <Bookmark className="h-5 w-5" />
+          {/* Actions */}
+          <div className="flex shrink-0 gap-1">
+            <button
+              onClick={() => onBookmark(job.id, !job.isBookmarked)}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title={job.isBookmarked ? "Unbookmark" : "Bookmark"}
+            >
+              {job.isBookmarked ? (
+                <BookmarkCheck className="h-5 w-5 text-amber-400" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
+            </button>
+            
+            {onDelete && (
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to remove this job?")) {
+                    onDelete(job.id);
+                  }
+                }}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                title="Remove Job"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
             )}
-          </button>
+          </div>
         </div>
 
         {/* Tags */}
