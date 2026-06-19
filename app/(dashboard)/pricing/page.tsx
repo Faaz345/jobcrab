@@ -158,7 +158,7 @@ export default function PricingPage() {
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-primary" /> 3 AI Auto-Applies per day</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-primary" /> 10 Outreach Emails per day</li>
-                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-primary" /> Basic Job Scraping</li>
+                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-primary" /> Basic Job Search</li>
                   <li className="flex items-center text-muted-foreground"><Check className="mr-2 h-4 w-4 opacity-50" /> Standard AI Model</li>
                 </ul>
               </CardContent>
@@ -195,7 +195,7 @@ export default function PricingPage() {
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Unlimited AI Auto-Applies</li>
                   <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Unlimited Outreach Emails</li>
-                  <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Priority Job Scraping (2x Faster)</li>
+                  <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Priority Job Search (2x Faster)</li>
                   <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Premium Resume Export (PDF)</li>
                   <li className="flex items-center font-medium"><Check className="mr-2 h-4 w-4 text-primary" /> Advanced App Analytics</li>
                 </ul>

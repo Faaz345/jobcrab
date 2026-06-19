@@ -34,10 +34,10 @@ export async function DELETE(request: Request) {
     });
 
     // 3. Format jobs into an email
-    let bodyHtml = `<h2>Job Backup for ${user.email}</h2><p>Here are all the jobs you scraped on JobCrab before deleting your account.</p>`;
+    let bodyHtml = `<h2>Job Backup for ${user.email}</h2><p>Here are all the jobs you searched on JobCrab before deleting your account.</p>`;
     
     if (jobs.length === 0) {
-      bodyHtml += `<p>You did not have any saved or scraped jobs.</p>`;
+      bodyHtml += `<p>You did not have any saved or searched jobs.</p>`;
     } else {
       bodyHtml += `<table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
         <thead>

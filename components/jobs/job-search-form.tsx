@@ -135,7 +135,7 @@ export function JobSearchForm({
             )}
           </div>
 
-          {/* Number of jobs to scrape */}
+          {/* Number of jobs to search */}
           <div className="space-y-3">
             <Label className="text-sm">Number of jobs to fetch (per source)</Label>
             <div className="flex flex-wrap gap-2">

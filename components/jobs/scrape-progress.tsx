@@ -173,7 +173,7 @@ export function ScrapeProgress({
             animate={{ opacity: 1 }}
             className="flex items-center justify-center w-full text-red-500 text-sm font-medium"
           >
-            Scraping failed. Try again.
+            Search failed. Try again.
           </motion.div>
         )}
       </AnimatePresence>

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, UploadCloud, FileText, X, Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
+import { Button } from "@/components/ui/button";
 
 const POPULAR_SKILLS = [
   "React", "Node.js", "TypeScript", "Python", "Java", "C++", "AWS", "Docker", "Kubernetes", "SQL", "NoSQL", "GraphQL", "Figma", "UI/UX", "Marketing", "SEO", "Sales", "Project Management"
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-[#E8E0D4] bg-[#F3EDE4]/50 backdrop-blur-md overflow-hidden">
+      <Card className="w-full max-w-2xl shadow-xl border-border bg-card/50 backdrop-blur-md overflow-hidden">
         <CardHeader className="text-center relative pb-2">
           <div className="flex justify-center mb-4">
             <Image src="/images/logo.png" alt="JobCrab Logo" width={300} height={80} className="h-16 w-auto object-contain scale-150" />
@@ -169,7 +169,7 @@ export default function OnboardingPage() {
           <AnimatePresence mode="wait" custom={1}>
             {step === 0 && (
               <motion.div key="step0" initial="enter" animate="center" exit="exit" variants={slideVariants} transition={{ duration: 0.3 }} className="space-y-6 w-full">
-                <div {...getRootProps()} className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-zinc-300 hover:border-primary/50 hover:bg-zinc-50"}`}>
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"}`}>
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center justify-center space-y-4">
                     <div className="p-4 bg-primary/10 rounded-full">
@@ -189,8 +189,8 @@ export default function OnboardingPage() {
                   </div>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-200" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-muted-foreground">Or</span></div>
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or</span></div>
                 </div>
                 <div className="flex justify-center">
                   <Button variant="outline" onClick={() => setStep(1)} className="w-full max-w-sm h-12">
@@ -223,13 +223,13 @@ export default function OnboardingPage() {
                   <Label className="text-base">Education & Degrees</Label>
                   
                   {/* Selected Education (Draggable) */}
-                  <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-h-[100px]">
+                  <div className="bg-muted/30 border border-border rounded-xl p-4 min-h-[100px]">
                     {eduChips.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">No education added yet. Click below or add custom.</p>
                     ) : (
                       <Reorder.Group axis="y" values={eduChips} onReorder={setEduChips} className="space-y-2">
                         {eduChips.map((edu) => (
-                          <Reorder.Item key={edu} value={edu} className="flex items-center justify-between bg-white border border-zinc-200 px-3 py-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing">
+                          <Reorder.Item key={edu} value={edu} className="flex items-center justify-between bg-background border border-border px-3 py-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing">
                             <div className="flex items-center gap-2">
                               <GripVertical className="h-4 w-4 text-zinc-400" />
                               <span className="text-sm font-medium">{edu}</span>
@@ -248,11 +248,11 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Word Bank */}
-                  <div className="pt-4 border-t border-zinc-100">
+                  <div className="pt-4 border-t border-border">
                     <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Quick Add</p>
                     <div className="flex flex-wrap gap-2">
                       {POPULAR_EDUCATION.filter(e => !eduChips.includes(e)).map(e => (
-                        <button key={e} onClick={() => addEdu(e)} className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 bg-white hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                        <button key={e} onClick={() => addEdu(e)} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-primary/50 hover:bg-primary/5 transition-colors">
                           + {e}
                         </button>
                       ))}
@@ -268,7 +268,7 @@ export default function OnboardingPage() {
                   <Label className="text-base">Top Skills & Tools</Label>
                   
                   {/* Selected Skills (Draggable) */}
-                  <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-h-[120px]">
+                  <div className="bg-muted/30 border border-border rounded-xl p-4 min-h-[120px]">
                     {skillsChips.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-6">No skills added yet. Click below or add custom.</p>
                     ) : (
@@ -291,11 +291,11 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Word Bank */}
-                  <div className="pt-4 border-t border-zinc-100">
+                  <div className="pt-4 border-t border-border">
                     <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Popular Skills</p>
                     <div className="flex flex-wrap gap-2">
                       {POPULAR_SKILLS.filter(s => !skillsChips.includes(s)).map(s => (
-                        <button key={s} onClick={() => addSkill(s)} className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 bg-white hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                        <button key={s} onClick={() => addSkill(s)} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-primary/50 hover:bg-primary/5 transition-colors">
                           + {s}
                         </button>
                       ))}
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
             )}
           </AnimatePresence>
         </CardContent>
-        <CardFooter className="flex justify-between border-t border-[#E8E0D4] bg-[#F3EDE4]/80 p-6">
+        <CardFooter className="flex justify-between border-t border-border bg-muted/50 p-6">
           <Button variant="outline" onClick={handleBack} disabled={step === 0 || isSubmitting || isParsing}>Back</Button>
           {step > 0 && step < 4 ? (
             <Button onClick={handleNext} disabled={!formData.title && step === 1}>Next Step</Button>

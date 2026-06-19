@@ -31,7 +31,7 @@ export function ScraperStatusBanner() {
     <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-400">
       <WifiOff className="h-4 w-4 shrink-0" />
       <span>
-        Scraping service is offline. Start it with{" "}
+        Search service is offline. Start it with{" "}
         <code className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs">npm run dev:all</code>{" "}
         to search for jobs.
       </span>

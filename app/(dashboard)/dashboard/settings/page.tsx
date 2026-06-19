@@ -512,7 +512,7 @@ export default function SettingsPage() {
             Danger Zone
           </CardTitle>
           <CardDescription className="text-destructive/80">
-            Permanently delete your account. All your scraped jobs will be backed up and sent to your email.
+            Permanently delete your account. All your searched jobs will be backed up and sent to your email.
           </CardDescription>
         </CardHeader>
         <CardContent>
