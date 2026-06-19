@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LayoutGridIcon } from "@/components/icons/layout-grid";
 import { SearchIcon } from "@/components/icons/search";
@@ -53,11 +53,33 @@ const navItems = [
   },
 ];
 
+function SidebarItem({ item, isActive }: { item: any; isActive: boolean }) {
+  const iconRef = useRef<any>(null);
+
+  return (
+    <Link
+      href={item.href}
+      onMouseEnter={() => iconRef.current?.startAnimation?.()}
+      onMouseLeave={() => iconRef.current?.stopAnimation?.()}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+      )}
+    >
+      <item.icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
+      {item.label}
+    </Link>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("user@example.com");
+  const logoutIconRef = useRef<any>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -99,21 +121,7 @@ export function Sidebar() {
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )}
-            >
-              <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
-              {item.label}
-            </Link>
-          );
+          return <SidebarItem key={item.href} item={item} isActive={isActive} />;
         })}
       </nav>
 
@@ -132,11 +140,13 @@ export function Sidebar() {
             </p>
           </div>
           <button
+            onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
+            onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
             onClick={handleSignOut}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             title="Sign out"
           >
-            <LogoutIcon className="h-4 w-4" />
+            <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
           </button>
         </div>
       </div>
