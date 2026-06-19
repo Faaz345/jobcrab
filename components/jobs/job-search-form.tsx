@@ -22,11 +22,22 @@ const SOURCES = [
 interface JobSearchFormProps {
   onSearch: (data: SearchQueryInput) => void;
   isSearching: boolean;
+  sessionId: string | null;
+  onComplete: () => void;
+  onJobsUpdate: (jobs: any[]) => void;
 }
+
+import { ScrapeProgress } from "@/components/jobs/scrape-progress";
 
 const LIMIT_OPTIONS = [10, 20, 30, 50, 100] as const;
 
-export function JobSearchForm({ onSearch, isSearching }: JobSearchFormProps) {
+export function JobSearchForm({ 
+  onSearch, 
+  isSearching,
+  sessionId,
+  onComplete,
+  onJobsUpdate,
+}: JobSearchFormProps) {
   const [selectedSources, setSelectedSources] = useState<string[]>(["remoteok"]);
   const [limit, setLimit] = useState<number>(20);
 
@@ -145,24 +156,37 @@ export function JobSearchForm({ onSearch, isSearching }: JobSearchFormProps) {
             </div>
           </div>
 
-          {/* Submit */}
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            disabled={isSearching || selectedSources.length === 0}
-          >
-            {isSearching ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Searching...
-              </>
-            ) : (
-              <>
-                <Search className="h-4 w-4" />
-                Search Jobs
-              </>
+          {/* Submit & Progress */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto shrink-0"
+              disabled={isSearching || selectedSources.length === 0}
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  Search Jobs
+                </>
+              )}
+            </Button>
+
+            {/* Inline Progress widget */}
+            {sessionId && isSearching && (
+              <div className="flex-1">
+                <ScrapeProgress
+                  sessionId={sessionId}
+                  onComplete={onComplete}
+                  onJobsUpdate={onJobsUpdate}
+                />
+              </div>
             )}
-          </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

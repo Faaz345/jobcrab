@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { Search } from "lucide-react";
 import { JobSearchForm } from "@/components/jobs/job-search-form";
-import { ScrapeProgress } from "@/components/jobs/scrape-progress";
 import { JobList } from "@/components/jobs/job-list";
 import { PreviousSearches } from "@/components/jobs/previous-searches";
 import { ScraperStatusBanner } from "@/components/shared/scraper-status-banner";
@@ -81,22 +80,19 @@ export default function JobsPage() {
       <ScraperStatusBanner />
 
       {/* Search form */}
-      <JobSearchForm onSearch={handleSearch} isSearching={isSearching} />
+      <JobSearchForm 
+        onSearch={handleSearch} 
+        isSearching={isSearching}
+        sessionId={sessionId}
+        onComplete={handleComplete}
+        onJobsUpdate={handleJobsUpdate}
+      />
 
       {/* Error message */}
       {searchError && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {searchError}
         </div>
-      )}
-
-      {/* Progress bar (shows during active scraping) */}
-      {sessionId && isSearching && (
-        <ScrapeProgress
-          sessionId={sessionId}
-          onComplete={handleComplete}
-          onJobsUpdate={handleJobsUpdate}
-        />
       )}
 
       {/* Job results */}
