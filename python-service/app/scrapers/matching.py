@@ -60,16 +60,16 @@ _STOP_WORDS = {
 }
 
 _SYNONYM_GROUPS: tuple[frozenset[str], ...] = (
-    frozenset({"engineer", "engineering", "developer", "development", "dev", "programmer", "sde"}),
+    frozenset({"engineer", "engineers", "engineering", "developer", "developers", "development", "dev", "devs", "programmer", "programmers", "sde"}),
     frozenset({"frontend", "react", "angular", "vue", "javascript", "typescript", "ui", "web"}),
     frozenset({"backend", "server-side"}),
     frozenset({"fullstack"}),
-    frozenset({"manager", "management", "owner"}),
+    frozenset({"manager", "managers", "management", "owner", "owners"}),
     frozenset({"product", "products"}),
-    frozenset({"data", "analytics", "analyst"}),
-    frozenset({"scientist", "science"}),
-    frozenset({"designer", "design"}),
-    frozenset({"executive", "exec"}),
+    frozenset({"data", "analytics", "analyst", "analysts"}),
+    frozenset({"scientist", "scientists", "science"}),
+    frozenset({"designer", "designers", "design"}),
+    frozenset({"executive", "executives", "exec"}),
     frozenset({"operations", "operation", "ops"}),
 )
 

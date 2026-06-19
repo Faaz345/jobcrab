@@ -143,6 +143,7 @@ class RemoteOKScraper(BaseScraper):
             filtered = filtered[:limit]
             listings = [self._to_listing(j) for j in filtered]
             logger.info("RemoteOK: %s jobs for %r", len(listings), job_title)
+            print(f"[RemoteOK] returned {len(listings)} jobs")
             return listings
         except Exception as exc:
             print(f"[RemoteOK] error: {exc}")
