@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
+      email: authUser.email,
       smtp,
       apiKeys,
       tier: profile.tier,

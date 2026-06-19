@@ -42,6 +42,9 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [deleteEmail, setDeleteEmail] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [sendBackup, setSendBackup] = useState(true);
+  const [backupEmail, setBackupEmail] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +69,8 @@ export default function SettingsPage() {
         setDryRun(data.outreach?.dryRunEnabled ?? true);
         setMaxEmails(data.outreach?.maxEmailsPerDay ?? 10);
         setUserTier(data.tier || "free");
+        setLoginEmail(data.email || "");
+        setBackupEmail(data.email || "");
       } catch (err: any) {
         toast.error(err.message || "Failed to retrieve settings");
       } finally {
@@ -195,12 +200,20 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings/account", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: deleteEmail }),
+        body: JSON.stringify({
+          email: deleteEmail,
+          sendBackup,
+          backupEmail: sendBackup ? backupEmail : ""
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete account");
       
-      toast.success("Account deleted. Job backup sent to your email.");
+      if (sendBackup) {
+        toast.success(`Account deleted. Job backup sent to ${backupEmail}.`);
+      } else {
+        toast.success("Account deleted successfully.");
+      }
       window.location.href = "/";
     } catch (err: any) {
       toast.error(err.message);
@@ -512,28 +525,73 @@ export default function SettingsPage() {
             Danger Zone
           </CardTitle>
           <CardDescription className="text-destructive/80">
-            Permanently delete your account. All your searched jobs will be backed up and sent to your email.
+            Permanently delete your account and all associated data. You can optionally request an Excel backup of all your searched jobs.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleDeleteAccount} className="space-y-4">
+          <form onSubmit={handleDeleteAccount} className="space-y-6">
+            {/* Backup option toggle */}
+            <div className="flex items-start space-x-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 max-w-xl">
+              <input
+                type="checkbox"
+                id="send-backup-toggle"
+                checked={sendBackup}
+                onChange={(e) => {
+                  setSendBackup(e.target.checked);
+                  if (e.target.checked && !backupEmail) {
+                    setBackupEmail(loginEmail);
+                  }
+                }}
+                className="mt-1 h-4 w-4 accent-destructive rounded cursor-pointer"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="send-backup-toggle" className="font-semibold text-foreground cursor-pointer">
+                  Email Backup of Searched Jobs
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Receive an Excel spreadsheet (.xlsx) containing all your searched jobs before account deletion.
+                </p>
+              </div>
+            </div>
+
+            {/* Custom target email for backup */}
+            {sendBackup && (
+              <div className="space-y-2 max-w-sm">
+                <Label htmlFor="backup-email">Send backup to email:</Label>
+                <Input
+                  id="backup-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={backupEmail}
+                  onChange={(e) => setBackupEmail(e.target.value)}
+                  className="border-input focus-visible:ring-primary"
+                  required={sendBackup}
+                />
+              </div>
+            )}
+
+            {/* Deletion confirmation field */}
             <div className="space-y-2 max-w-sm">
-              <Label htmlFor="delete-email" className="text-destructive">
-                Type your email to confirm deletion:
+              <Label htmlFor="delete-email" className="text-destructive font-medium">
+                Confirm Account Deletion:
               </Label>
+              <p className="text-xs text-muted-foreground mb-1">
+                Please type <span className="font-mono text-foreground font-semibold selection:bg-red-500/20">{loginEmail || "your login email"}</span> to confirm.
+              </p>
               <Input
                 id="delete-email"
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder="Type your email here"
                 value={deleteEmail}
                 onChange={(e) => setDeleteEmail(e.target.value)}
                 className="border-destructive/30 focus-visible:ring-destructive"
                 required
               />
             </div>
+
             <Button
               type="submit"
-              disabled={deletingAccount || !deleteEmail}
+              disabled={deletingAccount || deleteEmail !== loginEmail}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {deletingAccount ? (
@@ -542,7 +600,7 @@ export default function SettingsPage() {
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4" /> Delete Account & Backup Jobs
+                  <Trash2 className="h-4 w-4" /> {sendBackup ? "Delete Account & Send Backup" : "Delete Account Permanently"}
                 </>
               )}
             </Button>
