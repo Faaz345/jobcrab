@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useEffect } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
@@ -27,6 +28,14 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err) setError(err);
+    }
+  }, []);
 
   const {
     register,
@@ -83,7 +92,7 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard&origin=register`,
           queryParams: {
             prompt: "select_account",
           },

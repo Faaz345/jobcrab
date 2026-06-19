@@ -18,7 +18,37 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Ensure a profile row exists in our users table
+      const authOrigin = searchParams.get("origin");
+
+      // Check if user already exists in our Postgres database
+      const existingUser = await prisma.user.findUnique({
+        where: { id: data.user.id },
+      });
+
+      // If they are trying to log in but don't have an account, block them
+      if (!existingUser && authOrigin === "login") {
+        // Sign them out of the session Supabase just granted them
+        await supabase.auth.signOut();
+
+        // Optionally perform a hard delete from Supabase Auth so it doesn't leave a zombie row
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+          try {
+            const { createClient: createSupabaseAdmin } = await import("@supabase/supabase-js");
+            const adminAuth = createSupabaseAdmin(
+              process.env.NEXT_PUBLIC_SUPABASE_URL,
+              process.env.SUPABASE_SERVICE_ROLE_KEY,
+              { auth: { autoRefreshToken: false, persistSession: false } }
+            );
+            await adminAuth.auth.admin.deleteUser(data.user.id);
+          } catch (adminErr) {
+            console.error("Failed to delete unauthorized login user from Supabase Auth", adminErr);
+          }
+        }
+
+        return NextResponse.redirect(`${origin}/login?error=Account not found. Please sign up first.`);
+      }
+
+      // Ensure a profile row exists in our users table (for register, or updating existing login)
       await prisma.user.upsert({
         where: { id: data.user.id },
         create: {
