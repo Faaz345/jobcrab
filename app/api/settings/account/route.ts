@@ -61,12 +61,12 @@ export async function DELETE(request: Request) {
       <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #0d1117; color: #e6edf3; padding: 40px 20px; max-width: 600px; margin: 0 auto; border-radius: 12px;">
         ${logoHtml}
         <div style="background-color: #161b22; padding: 30px; border-radius: 8px; border: 1px solid #30363d;">
-          <h2 style="color: #58a6ff; margin-top: 0; text-align: center;">Account Deleted & Data Backup</h2>
+          <h2 style="color: #FD101A; margin-top: 0; text-align: center;">Account Deleted & Data Backup</h2>
           <p style="font-size: 16px; line-height: 1.5; color: #c9d1d9;">
             Hi there,
           </p>
           <p style="font-size: 16px; line-height: 1.5; color: #c9d1d9;">
-            Your JobCrab account (<strong>${user.email}</strong>) has been successfully deleted. We're sorry to see you go!
+            Your JobCrab account (<strong style="color: #FD101A;">${user.email}</strong>) has been successfully deleted. We're sorry to see you go!
           </p>
           <p style="font-size: 16px; line-height: 1.5; color: #c9d1d9;">
             As requested, we have attached a backup of all the jobs you searched during your time with us.
@@ -82,7 +82,7 @@ export async function DELETE(request: Request) {
     } else {
       bodyHtml += `
           <div style="background-color: #1f2428; border: 1px solid #30363d; padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center;">
-            <p style="margin: 0 0 10px 0; font-size: 18px; color: #58a6ff; font-weight: bold;">
+            <p style="margin: 0 0 10px 0; font-size: 18px; color: #FD101A; font-weight: bold;">
               ${jobs.length} Jobs Backed Up
             </p>
             <p style="margin: 0; font-size: 14px; color: #8b949e;">
