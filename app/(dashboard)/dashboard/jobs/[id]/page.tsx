@@ -44,6 +44,7 @@ export default async function JobDetailPage({
     remoteok: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     naukri: "bg-blue-500/15 text-blue-400 border-blue-500/30",
     wellfound: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    linkedin: "bg-sky-500/15 text-sky-400 border-sky-500/30",
   };
 
   return (

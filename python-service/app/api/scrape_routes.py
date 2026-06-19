@@ -13,6 +13,7 @@ from app.parsers.query_parser import parse_query
 from app.scrapers.remoteok import RemoteOKScraper
 from app.scrapers.naukri import NaukriScraper
 from app.scrapers.wellfound import WellfoundScraper
+from app.scrapers.linkedin import LinkedInScraper
 from app.normalizers.job_normalizer import normalize_batch
 from app.db.repository import (
     get_db,
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/scrape", tags=["scraping"])
 
 # Registry of available scrapers
 SCRAPERS = {
+    "linkedin": LinkedInScraper,
     "remoteok": RemoteOKScraper,
     "naukri": NaukriScraper,
     "wellfound": WellfoundScraper,

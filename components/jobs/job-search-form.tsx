@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { searchQuerySchema, type SearchQueryInput } from "@/lib/validators/jobs";
 
 const SOURCES = [
+  { id: "linkedin", label: "LinkedIn", description: "Global jobs worldwide" },
   { id: "remoteok", label: "RemoteOK", description: "Remote jobs worldwide" },
   { id: "naukri", label: "Naukri", description: "Indian job market" },
   { id: "wellfound", label: "Wellfound", description: "Startup jobs" },

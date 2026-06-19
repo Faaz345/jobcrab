@@ -117,7 +117,7 @@ export default function LandingPage() {
                 crabLine: "Crabs probe every crevice for sustenance.",
                 human: "Discover",
                 humanLine:
-                  "Search Naukri, RemoteOK, and Wellfound — AI probes every board for the right fit.",
+                  "Search LinkedIn, Naukri, RemoteOK, and Wellfound — AI probes every board for the right fit.",
               },
               {
                 step: "02",
