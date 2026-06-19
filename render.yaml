@@ -13,3 +13,5 @@ services:
         generateValue: true
       - key: FIRECRAWL_API_KEY
         sync: false
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/project/src/python-service/.playwright-cache
