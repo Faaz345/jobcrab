@@ -96,16 +96,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
   const router = useRouter();
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("user@example.com");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userTier, setUserTier] = useState<"free" | "pro">("free");
   const logoutIconRef = useRef<any>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserEmail(user.email || "user@example.com");
-        setUserName(user.user_metadata?.name || user.email?.split("@")[0] || "User");
-      }
-    });
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((profile) => {
+        if (profile && !profile.error) {
+          setUserName(profile.name || "User");
+          setUserEmail(profile.email || "user@example.com");
+          setUserAvatar(profile.avatarUrl || null);
+          setUserTier(profile.tier || "free");
+        }
+      })
+      .catch((err) => console.error("Failed to load profile", err));
   }, []);
 
   const userInitial = userName.charAt(0).toUpperCase();
@@ -165,15 +171,32 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
 
       {/* User Footer */}
       <div className="border-t border-border p-2">
-        <div className={cn("flex items-center rounded-lg", isCollapsed ? "flex-col gap-3 justify-center py-2" : "gap-3 px-3 py-2")}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
-            {userInitial}
+        <div className={cn("flex items-center rounded-lg relative", isCollapsed ? "flex-col gap-3 justify-center py-2" : "gap-3 px-3 py-2")}>
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
+            {userAvatar ? (
+              <Image src={userAvatar} alt={userName} width={32} height={32} className="rounded-full object-cover" />
+            ) : (
+              userInitial
+            )}
+            {/* Tiny floating PRO badge when collapsed */}
+            {isCollapsed && userTier === "pro" && (
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] font-bold text-black ring-2 ring-sidebar shadow-sm">
+                ★
+              </span>
+            )}
           </div>
           {!isCollapsed && (
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-foreground">
-                {userName}
-              </p>
+            <div className="flex-1 overflow-hidden flex flex-col justify-center">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {userName}
+                </p>
+                {userTier === "pro" && (
+                  <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                    Pro
+                  </span>
+                )}
+              </div>
               <p className="truncate text-xs text-muted-foreground">
                 {userEmail}
               </p>
