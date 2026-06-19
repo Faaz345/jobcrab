@@ -53,14 +53,6 @@ export async function POST(request: Request) {
 
     // Wrap in a transaction to ensure both operations succeed
     await prisma.$transaction([
-      prisma.baseResume.create({
-        data: {
-          userId: user.id,
-          name: "Generated Resume - " + new Date().toLocaleDateString(),
-          rawText: markdownResume,
-          isDefault: true,
-        },
-      }),
       prisma.user.upsert({
         where: { id: user.id },
         update: { isOnboarded: true },
@@ -70,13 +62,24 @@ export async function POST(request: Request) {
           isOnboarded: true,
         },
       }),
+      prisma.baseResume.create({
+        data: {
+          userId: user.id,
+          name: "Generated Resume - " + new Date().toLocaleDateString(),
+          rawText: markdownResume,
+          isDefault: true,
+        },
+      }),
     ]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error generating resume:", error);
+    try {
+      require('fs').writeFileSync('error-log.txt', error.stack || error.message || String(error));
+    } catch(e) {}
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", details: error.message },
       { status: 500 }
     );
   }

@@ -1,0 +1,13 @@
+PrismaClientKnownRequestError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].baseResume.create()` invocation in
+C:\Users\faazr\OneDrive\Desktop\FINAL-PROJECT\.next\dev\server\chunks\[root-of-the-server]__0ttdb8c._.js:189:152
+
+  186 }
+  187 // Wrap in a transaction to ensure both operations succeed
+  188 await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].$transaction([
+→ 189     __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].baseResume.create(
+Foreign key constraint violated on the constraint: `base_resumes_user_id_fkey`
+    at ei.handleRequestError (C:\Users\faazr\OneDrive\Desktop\FINAL-PROJECT\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (C:\Users\faazr\OneDrive\Desktop\FINAL-PROJECT\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (C:\Users\faazr\OneDrive\Desktop\FINAL-PROJECT\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (C:\Users\faazr\OneDrive\Desktop\FINAL-PROJECT\node_modules\@prisma\client\runtime\library.js:130:9551)
