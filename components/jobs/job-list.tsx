@@ -149,6 +149,7 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
             <SelectItem value="remoteok">RemoteOK</SelectItem>
             <SelectItem value="naukri">Naukri</SelectItem>
             <SelectItem value="wellfound">Wellfound</SelectItem>
+            <SelectItem value="linkedin">LinkedIn</SelectItem>
           </SelectContent>
         </Select>
 
@@ -182,9 +183,23 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {filteredJobs.map((job) => (
-            <JobCard key={job.id} job={job} onBookmark={handleBookmark} />
+        <div className="space-y-8">
+          {Object.entries(
+            filteredJobs.reduce((acc, job) => {
+              const s = job.source;
+              if (!acc[s]) acc[s] = [];
+              acc[s].push(job);
+              return acc;
+            }, {} as Record<string, Job[]>)
+          ).map(([source, sourceJobs]) => (
+            <div key={source} className="space-y-4">
+              <h3 className="text-lg font-semibold capitalize border-b pb-2">{source}</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {sourceJobs.map((job) => (
+                  <JobCard key={job.id} job={job} onBookmark={handleBookmark} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

@@ -126,28 +126,51 @@ async def _run_scraping(
         for source_name in sources:
             scraper_class = SCRAPERS[source_name]
             scraper = scraper_class()
-            per_source_limit = max(5, limit // len(sources))
-            scraper_tasks.append(scraper.scrape(parsed_query, per_source_limit, pages))
+            # Fetch up to the total limit from each source so we can balance them later
+            scraper_tasks.append(scraper.scrape(parsed_query, limit, pages))
 
         # Run all scrapers in parallel
         results = await asyncio.gather(*scraper_tasks, return_exceptions=True)
 
-        # Process results from each scraper
+        valid_results = {}
         for i, result in enumerate(results):
+            source_name = sources[i]
             if isinstance(result, Exception):
-                print(f"[Scraper] {sources[i]} failed: {result}")
-                continue
+                print(f"[Scraper] {source_name} failed: {result}")
+                valid_results[source_name] = []
+            else:
+                valid_results[source_name] = result or []
 
-            if not result:
-                print(f"[Scraper] {sources[i]} returned no results")
-                continue
+        # Iteratively distribute limit quota among sources that have jobs
+        quota = {s: 0 for s in sources}
+        remaining = limit
+        
+        active_sources = [s for s in sources if valid_results[s]]
+        while remaining > 0 and active_sources:
+            share = max(1, remaining // len(active_sources))
+            for s in list(active_sources):
+                available = len(valid_results[s]) - quota[s]
+                if available <= 0:
+                    active_sources.remove(s)
+                    continue
+                take = min(share, available)
+                take = min(take, remaining)
+                quota[s] += take
+                remaining -= take
+                if remaining == 0:
+                    break
+                    
+        final_jobs = []
+        for s in sources:
+            if quota[s] > 0:
+                final_jobs.extend(valid_results[s][:quota[s]])
+                print(f"[Scraper] {s}: allocated {quota[s]} jobs")
 
-            # Normalize and insert
-            normalized = normalize_batch(result, session_id, user_id)
+        if final_jobs:
+            normalized = normalize_batch(final_jobs, session_id, user_id)
             if normalized:
-                count = insert_job_listings(db, normalized)
-                total_inserted += count
-                print(f"[Scraper] {sources[i]}: inserted {count} jobs")
+                total_inserted = insert_job_listings(db, normalized)
+                print(f"[Scraper] Session {session_id} inserted {total_inserted} total jobs")
 
         # Update session as completed
         update_session_status(db, session_id, "completed", total_inserted)
