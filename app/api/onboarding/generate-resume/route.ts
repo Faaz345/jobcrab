@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export async function POST(request: Request) {
   try {
@@ -33,11 +33,16 @@ export async function POST(request: Request) {
     Make it look professional with standard resume sections: Summary, Skills, Experience, Education.
     `;
 
-    // Try OpenAI, fallback to basic template if API fails or key is missing
+    // Try Groq (llama-3.3-70b-versatile), fallback to basic template if API fails or key is missing
     let markdownResume = "";
     try {
+      const groq = createOpenAI({
+        baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
+        apiKey: process.env.GROQ_API_KEY,
+      });
+
       const { text } = await generateText({
-        model: openai("gpt-4o-mini"),
+        model: groq(process.env.GROQ_MODEL || "llama-3.3-70b-versatile"),
         prompt,
       });
       markdownResume = text;
@@ -56,9 +61,14 @@ export async function POST(request: Request) {
           isDefault: true,
         },
       }),
-      prisma.user.update({
+      prisma.user.upsert({
         where: { id: user.id },
-        data: { isOnboarded: true },
+        update: { isOnboarded: true },
+        create: {
+          id: user.id,
+          email: user.email!,
+          isOnboarded: true,
+        },
       }),
     ]);
 
