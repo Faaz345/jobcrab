@@ -18,42 +18,16 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const navItems = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutGridIcon,
-  },
-  {
-    label: "Jobs",
-    href: "/dashboard/jobs",
-    icon: SearchIcon,
-  },
-  {
-    label: "Resumes",
-    href: "/dashboard/resumes",
-    icon: FolderOpenIcon,
-  },
-  {
-    label: "Outreach",
-    href: "/dashboard/outreach",
-    icon: MailIcon,
-  },
-  {
-    label: "Applications",
-    href: "/dashboard/applications",
-    icon: FolderIcon,
-  },
-  {
-    label: "Pricing",
-    href: "/dashboard/pricing",
-    icon: ZapIcon,
-  },
-  {
-    label: "Settings",
-    href: "/dashboard/settings",
-    icon: SettingsIcon,
-  },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutGridIcon },
+  { label: "Jobs", href: "/dashboard/jobs", icon: SearchIcon },
+  { label: "Resumes", href: "/dashboard/resumes", icon: FolderOpenIcon },
+  { label: "Outreach", href: "/dashboard/outreach", icon: MailIcon },
+  { label: "Applications", href: "/dashboard/applications", icon: FolderIcon },
+  { label: "Pricing", href: "/dashboard/pricing", icon: ZapIcon },
+  { label: "Settings", href: "/dashboard/settings", icon: SettingsIcon },
 ];
+
+const BOUNCY = "transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]";
 
 function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: any; isActive: boolean; isCollapsed: boolean; onClick?: () => void }) {
   const iconRef = useRef<any>(null);
@@ -65,15 +39,27 @@ function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: any; isAc
       onMouseEnter={() => iconRef.current?.startAnimation?.()}
       onMouseLeave={() => iconRef.current?.stopAnimation?.()}
       className={cn(
-        "flex items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-200",
-        isCollapsed ? "justify-center px-0" : "gap-3 px-3",
+        "flex items-center rounded-lg text-sm font-medium overflow-hidden whitespace-nowrap",
+        BOUNCY,
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
           : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
       )}
     >
-      <item.icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
-      {!isCollapsed && <span className="truncate">{item.label}</span>}
+      <div 
+        className={cn("flex shrink-0 items-center justify-center", BOUNCY)}
+        style={{ width: isCollapsed ? '48px' : '44px', height: '40px' }}
+      >
+        <item.icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
+      </div>
+      <span 
+        className={cn(
+          BOUNCY,
+          isCollapsed ? "opacity-0 w-0 -translate-x-4" : "opacity-100 w-auto translate-x-0"
+        )}
+      >
+        {item.label}
+      </span>
     </Link>
   );
 
@@ -117,38 +103,43 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
   const userInitial = userName.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {
-    // Client-side sign out
     const supabase = createClient();
     await supabase.auth.signOut();
-    
-    // Server-side sign out (clears cookies properly)
     await fetch("/api/auth/logout", { method: "POST" });
-    
     router.push("/login");
     router.refresh();
   };
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 ease-in-out lg:translate-x-0",
+      "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-sidebar overflow-hidden lg:translate-x-0",
+      BOUNCY,
       isOpen ? "translate-x-0" : "-translate-x-full",
       isCollapsed ? "w-[72px]" : "w-64"
     )}>
       {/* Logo */}
-      <div className={cn("flex h-16 items-center border-b border-border overflow-hidden whitespace-nowrap", isCollapsed ? "justify-center px-0" : "px-6")}>
-        <Link href="/">
-          {isCollapsed ? (
-            <div className="flex h-8 w-8 items-center justify-center overflow-hidden">
-              <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 min-w-[160px] object-cover object-left" />
-            </div>
-          ) : (
-            <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 w-auto object-contain scale-[1.75] origin-left" />
-          )}
+      <div className="flex h-16 items-center border-b border-border px-5 overflow-hidden whitespace-nowrap shrink-0">
+        <Link href="/" className="flex items-center">
+          <div 
+            className={cn("flex items-center overflow-hidden", BOUNCY)}
+            style={{ width: isCollapsed ? '32px' : '160px' }}
+          >
+            <Image 
+              src="/images/logo.png" 
+              alt="JobCrab Logo" 
+              width={160} height={40} 
+              className={cn(
+                "h-8 min-w-[160px] origin-left", 
+                BOUNCY,
+                isCollapsed ? "object-left object-cover scale-100" : "object-left object-contain scale-[1.75]"
+              )} 
+            />
+          </div>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-hidden">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -159,61 +150,64 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-3 hidden lg:block">
+      <div className="p-3 hidden lg:block border-t border-border/50 shrink-0">
         <button
           onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center rounded-lg border border-border/50 bg-background/50 py-2 text-muted-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground hover:border-sidebar-accent-foreground/20 shadow-sm"
+          className={cn(
+            "flex w-full items-center justify-center rounded-lg border border-border/50 bg-background/50 py-2 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:border-sidebar-accent-foreground/20 shadow-sm transition-colors overflow-hidden",
+            BOUNCY
+          )}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          <ChevronLeft className={cn("h-4 w-4 shrink-0", BOUNCY, isCollapsed && "rotate-180")} />
         </button>
       </div>
 
       {/* User Footer */}
-      <div className="border-t border-border p-2">
-        <div className={cn("flex items-center rounded-lg relative h-12 transition-all", isCollapsed ? "justify-center" : "gap-3 px-3")}>
+      <div className="border-t border-border p-2 shrink-0">
+        <div className={cn("flex items-center rounded-lg relative h-12 overflow-hidden whitespace-nowrap px-3", BOUNCY, isCollapsed ? "gap-0" : "gap-3")}>
           <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
             {userAvatar ? (
               <Image src={userAvatar} alt={userName} width={32} height={32} className="rounded-full object-cover" />
             ) : (
               userInitial
             )}
-            {/* Tiny floating PRO badge when collapsed */}
             {isCollapsed && userTier === "pro" && (
               <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] font-bold text-black ring-2 ring-sidebar shadow-sm">
                 ★
               </span>
             )}
           </div>
-          {!isCollapsed && (
-            <>
-              <div className="flex-1 overflow-hidden flex flex-col justify-center">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {userName}
-                  </p>
-                  {userTier === "pro" && (
-                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
-                      Pro
-                    </span>
-                  )}
-                </div>
-                <p className="truncate text-xs text-muted-foreground">
-                  {userEmail}
-                </p>
-              </div>
-              
-              <button
-                onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
-                onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
-                onClick={handleSignOut}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
-                title="Sign out"
-              >
-                <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
-              </button>
-            </>
-          )}
+          
+          <div className={cn("flex-1 flex flex-col justify-center", BOUNCY, isCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto")}>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-medium text-foreground">
+                {userName}
+              </p>
+              {userTier === "pro" && (
+                <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                  Pro
+                </span>
+              )}
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {userEmail}
+            </p>
+          </div>
+          
+          <button
+            onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
+            onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
+            onClick={handleSignOut}
+            className={cn(
+              "rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 flex items-center justify-center",
+              BOUNCY,
+              isCollapsed ? "opacity-0 w-0 p-0 scale-50" : "opacity-100 w-8 h-8 p-1.5 scale-100"
+            )}
+            title="Sign out"
+          >
+            <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </aside>

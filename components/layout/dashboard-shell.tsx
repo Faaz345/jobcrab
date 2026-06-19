@@ -28,7 +28,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content area */}
       <div 
-        className={`flex flex-1 flex-col w-full min-w-0 transition-[margin] duration-300 ease-in-out ${
+        className={`flex flex-1 flex-col w-full min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           isCollapsed ? "lg:ml-[72px]" : "lg:ml-64"
         }`}
       >
