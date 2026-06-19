@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ElementType, type Ref } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LayoutGridIcon } from "@/components/icons/layout-grid";
 import { SearchIcon } from "@/components/icons/search";
@@ -13,11 +13,27 @@ import { FolderIcon } from "@/components/icons/folder";
 import { ZapIcon } from "@/components/icons/zap";
 import { SettingsIcon } from "@/components/icons/settings";
 import { LogoutIcon } from "@/components/icons/logout";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-const navItems = [
+type AnimatedIconHandle = {
+  startAnimation: () => void;
+  stopAnimation: () => void;
+};
+
+type SidebarIconProps = {
+  className?: string;
+  ref?: Ref<AnimatedIconHandle>;
+};
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: ElementType<SidebarIconProps>;
+};
+
+const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutGridIcon },
   { label: "Jobs", href: "/dashboard/jobs", icon: SearchIcon },
   { label: "Resumes", href: "/dashboard/resumes", icon: FolderOpenIcon },
@@ -28,9 +44,11 @@ const navItems = [
 ];
 
 const BOUNCY = "transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]";
+const LOGO_SHADOW = "drop-shadow-[0_1px_3px_rgba(0,0,0,0.22)] dark:drop-shadow-[0_0_7px_rgba(255,255,255,0.32)]";
 
-function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: any; isActive: boolean; isCollapsed: boolean; onClick?: () => void }) {
-  const iconRef = useRef<any>(null);
+function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: NavItem; isActive: boolean; isCollapsed: boolean; onClick?: () => void }) {
+  const iconRef = useRef<AnimatedIconHandle>(null);
+  const Icon = item.icon;
 
   const content = (
     <Link
@@ -50,7 +68,7 @@ function SidebarItem({ item, isActive, isCollapsed, onClick }: { item: any; isAc
         className={cn("flex shrink-0 items-center justify-center", BOUNCY)}
         style={{ width: isCollapsed ? '48px' : '44px', height: '40px' }}
       >
-        <item.icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
+        <Icon ref={iconRef} className={cn("h-4 w-4 shrink-0", isActive && "text-sidebar-primary")} />
       </div>
       <span 
         className={cn(
@@ -84,7 +102,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
   const [userEmail, setUserEmail] = useState("user@example.com");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<"free" | "pro">("free");
-  const logoutIconRef = useRef<any>(null);
+  const logoutIconRef = useRef<AnimatedIconHandle>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -101,6 +119,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
   }, []);
 
   const userInitial = userName.charAt(0).toUpperCase();
+  const isExternalAvatar =
+    userAvatar?.startsWith("https://") || userAvatar?.startsWith("http://");
+  const externalAvatarSrc = isExternalAvatar ? userAvatar : undefined;
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -118,19 +139,55 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
       isCollapsed ? "w-[72px]" : "w-64"
     )}>
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-border px-5 overflow-hidden whitespace-nowrap shrink-0">
-        <Link href="/" className="flex items-center h-8">
-          <div 
-            className={cn("flex items-center overflow-hidden", BOUNCY)}
-            style={{ width: isCollapsed ? '32px' : '128px' }}
-          >
-            <Image 
-              src="/images/logo.png" 
-              alt="JobCrab Logo" 
-              width={160} height={40} 
-              className="h-8 w-[128px] max-w-none object-contain object-left shrink-0" 
-            />
-          </div>
+      <div className={cn(
+        "flex h-16 items-center border-b border-border overflow-hidden whitespace-nowrap shrink-0",
+        BOUNCY,
+        isCollapsed ? "justify-center px-3" : "px-4"
+      )}>
+        <Link
+          href="/"
+          className={cn(
+            "relative flex h-12 items-center overflow-hidden",
+            BOUNCY,
+            isCollapsed ? "w-12 justify-center" : "w-[142px] justify-start"
+          )}
+          aria-label="JobCrab home"
+        >
+          <Image
+            src="/images/logo.png"
+            alt="JobCrab Logo"
+            width={1414}
+            height={526}
+            priority
+            className={cn(
+              "h-12 w-auto max-w-none object-contain object-left shrink-0 dark:hidden",
+              BOUNCY,
+              isCollapsed ? "opacity-0 scale-90" : "opacity-100 scale-[1.15] translate-x-3 origin-left"
+            )}
+          />
+          <Image
+            src="/images/logo-dark.png"
+            alt="JobCrab Logo"
+            width={1414}
+            height={526}
+            priority
+            className={cn(
+              "hidden h-12 w-auto max-w-none object-contain object-left shrink-0 dark:block",
+              BOUNCY,
+              isCollapsed ? "opacity-0 scale-90" : "opacity-100 scale-[1.15] translate-x-3 origin-left"
+            )}
+          />
+          <Image
+            src="/images/crab-only.png"
+            alt=""
+            width={821}
+            height={556}
+            className={cn(
+              "absolute left-1/2 top-1/2 h-10 w-12 -translate-x-1/2 -translate-y-1/2 object-contain",
+              BOUNCY,
+              isCollapsed ? "opacity-100 scale-100" : "opacity-0 scale-90"
+            )}
+          />
         </Link>
       </div>
 
@@ -163,7 +220,15 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
       <div className="border-t border-border p-2 shrink-0">
         <div className={cn("flex items-center rounded-lg relative h-12 overflow-hidden whitespace-nowrap px-3", BOUNCY, isCollapsed ? "gap-0" : "gap-3")}>
           <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
-            {userAvatar ? (
+            {externalAvatarSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element -- External OAuth avatars can fail Next's optimizer.
+              <img
+                src={externalAvatarSrc}
+                alt={userName}
+                referrerPolicy="no-referrer"
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : userAvatar ? (
               <Image src={userAvatar} alt={userName} width={32} height={32} className="rounded-full object-cover" />
             ) : (
               userInitial
