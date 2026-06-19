@@ -243,7 +243,7 @@ class WellfoundScraper(BaseScraper):
         
         print(f"[Wellfound Firecrawl] Scraping url: {url}")
         app = FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
-        resp = app.scrape_url(url, params={"formats": ["markdown"], "waitFor": 5000, "timeout": 60000})
+        resp = app.scrape_url(url, formats=["markdown"], timeout=60000)
         
         res_dict = {}
         if isinstance(resp, dict):

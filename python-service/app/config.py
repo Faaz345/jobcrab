@@ -26,9 +26,11 @@ class Settings(BaseSettings):
     DEEPSEEK_MODEL: str = "deepseek-v4-flash"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()

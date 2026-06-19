@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { JobCard } from "./job-card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Job {
   id: string;
@@ -115,6 +121,14 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
     return true;
   });
 
+  const groupedJobs = filteredJobs.reduce((acc, job) => {
+    const s = job.source;
+    if (!acc[s]) acc[s] = [];
+    acc[s].push(job);
+    return acc;
+  }, {} as Record<string, Job[]>);
+  const defaultAccordionValues = Object.keys(groupedJobs);
+
   return (
     <div className="space-y-4">
       {/* Filter bar */}
@@ -183,25 +197,24 @@ export function JobList({ initialJobs = [], streamedJobs = [] }: JobListProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {Object.entries(
-            filteredJobs.reduce((acc, job) => {
-              const s = job.source;
-              if (!acc[s]) acc[s] = [];
-              acc[s].push(job);
-              return acc;
-            }, {} as Record<string, Job[]>)
-          ).map(([source, sourceJobs]) => (
-            <div key={source} className="space-y-4">
-              <h3 className="text-lg font-semibold capitalize border-b pb-2">{source}</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                {sourceJobs.map((job) => (
-                  <JobCard key={job.id} job={job} onBookmark={handleBookmark} />
-                ))}
-              </div>
-            </div>
+        <Accordion type="multiple" defaultValue={defaultAccordionValues} className="space-y-4">
+          {Object.entries(groupedJobs).map(([source, sourceJobs]) => (
+            <AccordionItem value={source} key={source} className="border rounded-xl px-4 bg-card shadow-sm border-border/50">
+              <AccordionTrigger className="text-lg font-semibold capitalize hover:no-underline">
+                <div className="flex items-center gap-2">
+                  {source} <Badge variant="secondary" className="ml-1">{sourceJobs.length}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-4 md:grid-cols-2 pt-2 pb-4">
+                  {sourceJobs.map((job) => (
+                    <JobCard key={job.id} job={job} onBookmark={handleBookmark} />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       )}
     </div>
   );
