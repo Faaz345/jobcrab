@@ -44,7 +44,77 @@ export default function OnboardingPage() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleNext = () => setStep((s) => s + 1);
+  const isGibberish = (str: string) => {
+    const text = str.trim();
+    if (!text) return false;
+    
+    if (/(.)\1{3,}/.test(text)) return true; // 4 identical chars
+    if (/[bcdfghjklmnpqrstvwxz]{5,}/i.test(text)) return true; // 5 consecutive consonants
+    if (text.length > 4 && !/[aeiouy]/i.test(text)) return true; // No vowels and > 4 chars
+    if (text.split(' ').some(word => word.length > 20)) return true; // Unusually long word
+    return false;
+  };
+
+  const validateStep = () => {
+    if (step === 1) {
+      if (!formData.title.trim() || formData.title.length < 2) {
+        toast.error("Please enter a valid job title.");
+        return false;
+      }
+      if (isGibberish(formData.title)) {
+        toast.error("Job title looks like random text. Please enter a real title.");
+        return false;
+      }
+      const exp = Number(formData.experience);
+      if (formData.experience === "" || isNaN(exp) || exp < 0 || exp > 50) {
+        toast.error("Please enter a realistic years of experience (0-50).");
+        return false;
+      }
+      if (!formData.location.trim() || formData.location.length < 2) {
+        toast.error("Please enter a valid location.");
+        return false;
+      }
+      if (isGibberish(formData.location)) {
+        toast.error("Location looks like random text. Please enter a real location.");
+        return false;
+      }
+    }
+    
+    if (step === 2) {
+      if (eduChips.length === 0) {
+        toast.error("Please add at least one education or degree.");
+        return false;
+      }
+      for (const edu of eduChips) {
+        if (isGibberish(edu)) {
+          toast.error(`Education "${edu}" looks like random text.`);
+          return false;
+        }
+      }
+    }
+
+    if (step === 3) {
+      if (skillsChips.length === 0) {
+        toast.error("Please add at least one skill.");
+        return false;
+      }
+      for (const skill of skillsChips) {
+        if (isGibberish(skill)) {
+          toast.error(`Skill "${skill}" looks like random text.`);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setStep((s) => s + 1);
+    }
+  };
+
   const handleBack = () => setStep((s) => Math.max(0, s - 1));
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -97,6 +167,15 @@ export default function OnboardingPage() {
   });
 
   const handleSubmit = async () => {
+    if (formData.workHistory && formData.workHistory.trim().length < 10) {
+      toast.error("If providing work history, please add a bit more detail.");
+      return;
+    }
+    if (formData.workHistory && isGibberish(formData.workHistory)) {
+      toast.error("Work history looks like random text. Please provide real details.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const finalData = {
@@ -318,7 +397,7 @@ export default function OnboardingPage() {
         <CardFooter className="flex justify-between border-t border-border bg-muted/50 p-6">
           <Button variant="outline" onClick={handleBack} disabled={step === 0 || isSubmitting || isParsing}>Back</Button>
           {step > 0 && step < 4 ? (
-            <Button onClick={handleNext} disabled={!formData.title && step === 1}>Next Step</Button>
+            <Button onClick={handleNext}>Next Step</Button>
           ) : step === 4 ? (
             <Button onClick={handleSubmit} disabled={isSubmitting} className="min-w-[200px]">
               {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Finalizing...</> : "Generate Resume & Finish"}
