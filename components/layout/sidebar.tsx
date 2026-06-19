@@ -118,26 +118,17 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
       isCollapsed ? "w-[72px]" : "w-64"
     )}>
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-border px-6 overflow-hidden whitespace-nowrap shrink-0">
-        <Link href="/" className="flex items-center">
-          <Image 
-            src="/images/crab-only.png" 
-            alt="JobCrab Icon" 
-            width={32} height={32} 
-            className="h-8 w-8 shrink-0 object-contain" 
-          />
+      <div className="flex h-16 items-center border-b border-border px-5 overflow-hidden whitespace-nowrap shrink-0">
+        <Link href="/" className="flex items-center h-8">
           <div 
-            className={cn(
-              "flex items-center overflow-hidden", 
-              BOUNCY,
-              isCollapsed ? "w-0 opacity-0 ml-0" : "w-[120px] opacity-100 ml-2"
-            )}
+            className={cn("flex items-center overflow-hidden", BOUNCY)}
+            style={{ width: isCollapsed ? '32px' : '128px' }}
           >
             <Image 
-              src="/images/text-only.png" 
-              alt="JobCrab Text" 
-              width={120} height={32} 
-              className="h-6 w-auto object-contain" 
+              src="/images/logo.png" 
+              alt="JobCrab Logo" 
+              width={160} height={40} 
+              className="h-8 w-[128px] max-w-none object-contain object-left shrink-0" 
             />
           </div>
         </Link>
