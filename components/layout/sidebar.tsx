@@ -171,7 +171,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
 
       {/* User Footer */}
       <div className="border-t border-border p-2">
-        <div className={cn("flex items-center rounded-lg relative", isCollapsed ? "flex-col gap-3 justify-center py-2" : "gap-3 px-3 py-2")}>
+        <div className={cn("flex items-center rounded-lg relative h-12 transition-all", isCollapsed ? "justify-center" : "gap-3 px-3")}>
           <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary shrink-0">
             {userAvatar ? (
               <Image src={userAvatar} alt={userName} width={32} height={32} className="rounded-full object-cover" />
@@ -186,47 +186,33 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
             )}
           </div>
           {!isCollapsed && (
-            <div className="flex-1 overflow-hidden flex flex-col justify-center">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {userName}
+            <>
+              <div className="flex-1 overflow-hidden flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {userName}
+                  </p>
+                  {userTier === "pro" && (
+                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                      Pro
+                    </span>
+                  )}
+                </div>
+                <p className="truncate text-xs text-muted-foreground">
+                  {userEmail}
                 </p>
-                {userTier === "pro" && (
-                  <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
-                    Pro
-                  </span>
-                )}
               </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {userEmail}
-              </p>
-            </div>
-          )}
-          
-          {isCollapsed ? (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <button
-                  onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
-                  onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
-                  onClick={handleSignOut}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
-                >
-                  <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="ml-2">Sign out</TooltipContent>
-            </Tooltip>
-          ) : (
-            <button
-              onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
-              onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
-              onClick={handleSignOut}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
-              title="Sign out"
-            >
-              <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
-            </button>
+              
+              <button
+                onMouseEnter={() => logoutIconRef.current?.startAnimation?.()}
+                onMouseLeave={() => logoutIconRef.current?.stopAnimation?.()}
+                onClick={handleSignOut}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive shrink-0"
+                title="Sign out"
+              >
+                <LogoutIcon ref={logoutIconRef} className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </div>
