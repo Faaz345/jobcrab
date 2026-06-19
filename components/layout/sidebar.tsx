@@ -5,53 +5,51 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  Search,
-  FileText,
-  Mail,
-  LayoutDashboard,
-  Settings,
-  Briefcase,
-  Zap,
-  LogOut,
-} from "lucide-react";
+import { LayoutGridIcon } from "@/components/icons/layout-grid";
+import { SearchIcon } from "@/components/icons/search";
+import { FolderOpenIcon } from "@/components/icons/folder-open";
+import { MailIcon } from "@/components/icons/mail";
+import { FolderIcon } from "@/components/icons/folder";
+import { ZapIcon } from "@/components/icons/zap";
+import { SettingsIcon } from "@/components/icons/settings";
+import { LogoutIcon } from "@/components/icons/logout";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: LayoutDashboard,
+    icon: LayoutGridIcon,
   },
   {
     label: "Jobs",
     href: "/dashboard/jobs",
-    icon: Search,
+    icon: SearchIcon,
   },
   {
     label: "Resumes",
     href: "/dashboard/resumes",
-    icon: FileText,
+    icon: FolderOpenIcon,
   },
   {
     label: "Outreach",
     href: "/dashboard/outreach",
-    icon: Mail,
+    icon: MailIcon,
   },
   {
     label: "Applications",
     href: "/dashboard/applications",
-    icon: Briefcase,
+    icon: FolderIcon,
   },
   {
     label: "Pricing",
     href: "/dashboard/pricing",
-    icon: Zap,
+    icon: ZapIcon,
   },
   {
     label: "Settings",
     href: "/dashboard/settings",
-    icon: Settings,
+    icon: SettingsIcon,
   },
 ];
 
@@ -89,7 +87,9 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar">
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-border px-6">
-        <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 w-auto object-contain scale-[1.75] origin-left" />
+        <Link href="/">
+          <Image src="/images/logo.png" alt="JobCrab Logo" width={160} height={40} className="h-8 w-auto object-contain scale-[1.75] origin-left" />
+        </Link>
       </div>
 
       {/* Navigation */}
@@ -136,7 +136,7 @@ export function Sidebar() {
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             title="Sign out"
           >
-            <LogOut className="h-4 w-4" />
+            <LogoutIcon className="h-4 w-4" />
           </button>
         </div>
       </div>

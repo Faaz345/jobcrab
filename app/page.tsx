@@ -7,8 +7,33 @@ import { ArrowRight } from "lucide-react";
 import { CrowdCanvas } from "@/components/ui/skiper-ui/job-seekers-canvas";
 import { LiquidButton as Button } from "@/components/ui/liquid-glass-button";
 
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
 export default function LandingPage() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If there's a hash fragment from Supabase OAuth redirect, the session might be established
+      // so we wait for the auth state change if needed, but getSession usually gets it if it's there
+      if (session) {
+        setIsAuthenticated(true);
+      }
+      setIsLoading(false);
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) setIsAuthenticated(true);
+      });
+      return () => subscription.unsubscribe();
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="landing-page min-h-screen bg-[#FBE6D6] text-[#2C2417]">
@@ -19,19 +44,31 @@ export default function LandingPage() {
             <Image src="/images/logo.png" alt="JobCrab Logo" width={400} height={100} className="h-12 w-auto object-contain scale-[1.75] origin-left" priority />
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="rounded-lg px-3.5 py-1.5 text-[14px] font-medium text-[#6B5D4D] transition-colors hover:text-[#2C2417]"
-            >
-              Sign in
-            </Link>
-            <Button
-              variant="primary"
-              onClick={() => router.push('/register')}
-              className="px-5"
-            >
-              Get started
-            </Button>
+            {isLoading ? null : isAuthenticated ? (
+              <Button
+                variant="primary"
+                onClick={() => router.push('/dashboard')}
+                className="px-5"
+              >
+                Go to Dashboard
+              </Button>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-lg px-3.5 py-1.5 text-[14px] font-medium text-[#6B5D4D] transition-colors hover:text-[#2C2417]"
+                >
+                  Sign in
+                </Link>
+                <Button
+                  variant="primary"
+                  onClick={() => router.push('/register')}
+                  className="px-5"
+                >
+                  Get started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -79,20 +116,32 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button
-              variant="primary"
-              onClick={() => router.push('/register')}
-              className="w-full sm:w-auto"
-            >
-              Start your hunt
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => router.push('/login')}
-              className="rounded-full"
-            >
-              Sign in
-            </Button>
+            {isLoading ? null : isAuthenticated ? (
+              <Button
+                variant="primary"
+                onClick={() => router.push('/dashboard')}
+                className="w-full sm:w-auto"
+              >
+                Go to Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={() => router.push('/register')}
+                  className="w-full sm:w-auto"
+                >
+                  Start your hunt
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push('/login')}
+                  className="rounded-full"
+                >
+                  Sign in
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>
