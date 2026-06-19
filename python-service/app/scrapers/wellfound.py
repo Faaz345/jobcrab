@@ -30,6 +30,7 @@ class WellfoundScraper(BaseScraper):
     async def scrape(self, query: ParsedQuery, limit: int = 20, pages: int = 1):
         import asyncio as _asyncio
         import sys as _sys
+        from app.config import settings
 
         def _runner():
             if _sys.platform == "win32":
@@ -37,10 +38,32 @@ class WellfoundScraper(BaseScraper):
             else:
                 loop = _asyncio.new_event_loop()
             _asyncio.set_event_loop(loop)
+            
+            # Try Playwright first
             try:
-                return loop.run_until_complete(self._scrape_async(query, limit))
+                print("[Wellfound] Trying Playwright scraper...")
+                results = loop.run_until_complete(self._scrape_async(query, limit))
+                if results:
+                    return results
+                print("[Wellfound] Playwright returned no results.")
+            except Exception as e:
+                print(f"[Wellfound] Playwright failed: {e}")
             finally:
-                loop.close()
+                try:
+                    loop.close()
+                except Exception:
+                    pass
+                
+            # Fall back to Firecrawl if available
+            if settings.FIRECRAWL_API_KEY:
+                print("[Wellfound] Falling back to Firecrawl...")
+                try:
+                    return self._scrape_firecrawl(query, limit)
+                except Exception as e:
+                    print(f"[Wellfound] Firecrawl failed: {e}")
+            else:
+                print("[Wellfound] Firecrawl API key missing. Cannot run fallback.")
+            return []
 
         return await _asyncio.to_thread(_runner)
 
@@ -208,3 +231,145 @@ class WellfoundScraper(BaseScraper):
         if location and location.lower() != "remote":
             return f"{_BASE_URL}/role/l/{slug}/{_slugify(location)}"
         return f"{_BASE_URL}/role/r/{slug}"
+
+    def _scrape_firecrawl(self, query: ParsedQuery, limit: int = 20):
+        import html as _html
+        from firecrawl import FirecrawlApp
+        from app.config import settings
+        
+        job_title = query.role
+        location = query.location
+        url = self._build_url(job_title, location)
+        
+        print(f"[Wellfound Firecrawl] Scraping url: {url}")
+        app = FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
+        resp = app.scrape_url(url, params={"formats": ["markdown"], "waitFor": 5000, "timeout": 60000})
+        
+        res_dict = {}
+        if isinstance(resp, dict):
+            res_dict = resp
+        elif hasattr(resp, "model_dump"):
+            res_dict = resp.model_dump()
+        elif hasattr(resp, "dict"):
+            res_dict = resp.dict()
+        elif hasattr(resp, "__dict__"):
+            res_dict = vars(resp)
+            
+        markdown = res_dict.get("markdown") or ""
+        if not markdown:
+            print("[Wellfound Firecrawl] Returned empty markdown.")
+            return []
+            
+        jobs = self._parse_markdown(markdown)
+        jobs = [j for j in jobs if title_matches_role(str(j.get("title") or ""), job_title)]
+        jobs = jobs[:limit]
+        
+        listings = []
+        for job in jobs:
+            job_url = str(job.get("url") or "").strip()
+            if job_url and not job_url.startswith("http"):
+                job_url = f"{_BASE_URL}{job_url}" if job_url.startswith("/") else f"{_BASE_URL}/{job_url}"
+            listings.append(RawJobListing(
+                title=str(job.get("title") or "").strip(),
+                company=str(job.get("company") or "").strip(),
+                company_logo_url=(str(job.get("company_logo_url") or "").strip() or None),
+                location=_clean_loc(str(job.get("location") or "").strip()) or "Remote",
+                salary_range=str(job.get("salary") or "").strip() or None,
+                description=str(job.get("description") or "").strip()[:5000],
+                url=job_url or _BASE_URL,
+                source=self.source_name,
+                tags=[],
+                posted_at=None,
+            ))
+            
+        print(f"[Wellfound Firecrawl] Returned {len(listings)} jobs.")
+        return listings
+
+    def _parse_markdown(self, markdown):
+        import html as _html
+        if not markdown:
+            return []
+        lines = [ln.strip() for ln in markdown.splitlines()]
+        jobs = []
+        company = ""
+        company_logo = ""
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if "wellfound.com/company/" in line:
+                logo_m = re.search(r"!\[[^\]]*\]\((?P<img>https?://[^)]+)\)", line)
+                if logo_m:
+                    company_logo = logo_m.group("img").strip()
+                bold_m = re.search(r"\*\*(?P<c>.+?)\*\*", line)
+                logoname_m = re.search(r"!\[(?P<c>[^\]]+?)\s+company logo\]", line)
+                if bold_m:
+                    company = _html.unescape(bold_m.group("c")).strip()
+                    i += 1
+                    continue
+                if logoname_m:
+                    company = _html.unescape(logoname_m.group("c")).strip()
+                    i += 1
+                    continue
+                i += 1
+                continue
+            jm = re.match(r"^\[(?P<t>[^\]]+)\]\((?P<u>https://wellfound\.com/jobs/[^)]*)\)", line)
+            if not jm:
+                i += 1
+                continue
+            title = _html.unescape(jm.group("t")).strip()
+            url = jm.group("u").strip()
+            detail = []
+            c = i + 1
+            while c < len(lines):
+                nl = lines[c]
+                if "wellfound.com/company/" in nl:
+                    break
+                if re.match(r"^\[[^\]]+\]\(https://wellfound\.com/jobs/", nl):
+                    break
+                if nl:
+                    detail.append(_html.unescape(nl))
+                c += 1
+            jobs.append({
+                "title": title,
+                "company": company,
+                "company_logo_url": company_logo,
+                "location": self._loc(detail),
+                "salary": self._salary(detail),
+                "description": self._desc(detail),
+                "url": url,
+            })
+            i = c
+        return jobs
+
+    @staticmethod
+    def _has_currency(text):
+        t = text.lower()
+        return ("$" in text or "\u20b9" in text or "\u20ac" in text or "\u00a3" in text
+                or "rs " in t or "inr" in t)
+
+    def _salary(self, lines):
+        for ln in lines:
+            if self._has_currency(ln):
+                return ln.strip()
+        return ""
+
+    def _loc(self, lines):
+        skip = re.compile(r"(full-time|contract|internship|founder|years?\s+of\s+exp|save|apply)", re.I)
+        date = re.compile(r"^(?:today|yesterday|\d+\s*(?:day|days|week|weeks|month|months|year|years)\s+ago)", re.I)
+        for ln in lines:
+            s = ln.strip()
+            if not s or self._has_currency(s) or skip.search(s) or date.search(s):
+                continue
+            return s
+        return ""
+
+    def _desc(self, lines):
+        out = []
+        for ln in lines:
+            t = ln.replace("Save", "").replace("Apply", "").strip()
+            if not t or self._has_currency(t):
+                continue
+            if re.search(r"^(?:today|yesterday|\d+\s*(?:day|week|month|year)s?\s+ago)", t, re.I):
+                continue
+            out.append(_clean_loc(t))
+        return " / ".join(out[:4])

@@ -1,11 +1,7 @@
-"""
-LinkedIn scraper (async Playwright).
-Fetches jobs from LinkedIn public search endpoint.
-"""
-
 import re
 import urllib.parse
 import logging
+import httpx
 from app.scrapers.base import BaseScraper, ParsedQuery, RawJobListing
 from app.scrapers.matching import title_matches_role
 
@@ -15,143 +11,99 @@ class LinkedInScraper(BaseScraper):
     source_name = "linkedin"
 
     async def scrape(self, query: ParsedQuery, limit: int = 20, pages: int = 1):
-        import asyncio as _asyncio
-        import sys as _sys
-
-        def _runner():
-            if _sys.platform == "win32":
-                loop = _asyncio.ProactorEventLoop()
-            else:
-                loop = _asyncio.new_event_loop()
-            _asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(self._scrape_async(query, limit))
-            finally:
-                loop.close()
-
-        return await _asyncio.to_thread(_runner)
-
-    async def _scrape_async(self, query: ParsedQuery, limit: int = 20):
-        try:
-            from playwright.async_api import async_playwright, Error as PlaywrightError
-        except ImportError:
-            print("[LinkedIn] Playwright not installed. Skipping.")
-            return []
-
         job_title = query.role
         location = query.location or "Worldwide"
         
-        # Build URL
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        
         q = urllib.parse.quote(job_title)
         l = urllib.parse.quote(location)
-        url = f"https://www.linkedin.com/jobs/search?keywords={q}&location={l}"
         
         all_listings: list[RawJobListing] = []
         
-        try:
-            async with async_playwright() as pw:
-                browser = await self._launch(pw, PlaywrightError)
-                context = await browser.new_context(
-                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                "Chrome/126.0.0.0 Safari/537.36"),
-                    viewport={"width": 1366, "height": 768},
-                    locale="en-US",
-                )
-                try:
-                    page = await context.new_page()
-                    # Block images and unnecessary resources to speed up and reduce ban risk
-                    await page.route("**/*", lambda route: route.continue_() if route.request.resource_type in ["document", "script", "xhr", "fetch"] else route.abort())
-                    
-                    print(f"[LinkedIn] scraping url: {url}")
-                    resp = await page.goto(url, timeout=45000, wait_until="domcontentloaded")
-                    
-                    if resp and resp.status == 429:
+        for page_num in range(pages):
+            start = page_num * 10
+            url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={l}&start={start}"
+            
+            print(f"[LinkedIn] scraping url: {url}")
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, headers=headers, timeout=20)
+                    if resp.status_code == 429:
                         print("[LinkedIn] 429 Too Many Requests. IP might be rate-limited.")
-                        return []
+                        break
+                    if resp.status_code != 200:
+                        print(f"[LinkedIn] non-200 response: {resp.status_code}")
+                        break
+                    
+                    html = resp.text
+                    card_matches = list(re.finditer(r'<a class="base-card__full-link[^"]*" href="(?P<url>https://[^"]+/jobs/view/[^"]+)"', html))
+                    
+                    if not card_matches:
+                        print("[LinkedIn] no more job cards found.")
+                        break
                         
-                    await page.wait_for_timeout(3000)
-                    
-                    # Scroll down to load more jobs if needed
-                    for _ in range(3):
-                        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                        await page.wait_for_timeout(1000)
-                    
-                    raw_jobs = await page.evaluate(
-                        '''
-                        () => {
-                            const jobs = [];
-                            // LinkedIn public job search uses these classes
-                            const cards = document.querySelectorAll('div.base-search-card, li > div.job-search-card');
+                    for index, match in enumerate(card_matches):
+                        if len(all_listings) >= limit:
+                            break
                             
-                            for (const card of cards) {
-                                const titleEl = card.querySelector('.base-search-card__title');
-                                const companyEl = card.querySelector('.base-search-card__subtitle');
-                                const locationEl = card.querySelector('.job-search-card__location');
-                                const linkEl = card.querySelector('.base-card__full-link') || card.querySelector('a');
-                                
-                                if (!titleEl || !linkEl) continue;
-                                
-                                const title = titleEl.textContent.trim();
-                                const company = companyEl ? companyEl.textContent.trim() : "Unknown Company";
-                                const location = locationEl ? locationEl.textContent.trim() : "Remote";
-                                let url = linkEl.href;
-                                
-                                // Clean tracking params from URL
-                                if (url.includes('?')) {
-                                    url = url.split('?')[0];
-                                }
-                                
-                                jobs.push({
-                                    title,
-                                    company,
-                                    location,
-                                    url,
-                                    salary: "",
-                                    description: title + " at " + company + " in " + location
-                                });
-                            }
-                            return jobs;
-                        }
-                        '''
-                    )
-                    
-                    for j in raw_jobs:
-                        if title_matches_role(j.get("title", ""), job_title):
+                        start_pos = match.start()
+                        end_pos = card_matches[index+1].start() if index + 1 < len(card_matches) else len(html)
+                        card_html = html[start_pos:end_pos]
+                        
+                        # Extract URL
+                        job_url = match.group("url")
+                        if "?" in job_url:
+                            job_url = job_url.split("?")[0]
+                            
+                        # Extract Title
+                        title_m = re.search(r'<span class="sr-only">\s*(.*?)\s*</span>', card_html, re.S)
+                        title = title_m.group(1).strip() if title_m else "Unknown Title"
+                        
+                        # Extract Company Name
+                        company_m = re.search(r'<a class="hidden-nested-link"[^>]*>\s*(.*?)\s*</a>', card_html, re.S)
+                        if not company_m:
+                            company_m = re.search(r'<h4 class="base-search-card__subtitle"[^>]*>\s*(.*?)\s*</h4>', card_html, re.S)
+                        company = company_m.group(1).strip() if company_m else "Unknown Company"
+                        company = re.sub(r'<[^>]+>', '', company).strip()
+                        
+                        # Extract Location
+                        loc_m = re.search(r'<span class="job-search-card__location"[^>]*>\s*(.*?)\s*</span>', card_html, re.S)
+                        job_location = loc_m.group(1).strip() if loc_m else location
+                        
+                        # Extract Logo
+                        logo_m = re.search(r'data-delayed-url="(?P<logo>https://[^"]+)"', card_html)
+                        if not logo_m:
+                            logo_m = re.search(r'src="(?P<logo>https://[^"]+)"', card_html)
+                        logo = logo_m.group("logo") if logo_m else None
+                        if logo:
+                            logo = logo.replace("&amp;", "&")
+                        
+                        if title_matches_role(title, job_title):
                             all_listings.append(RawJobListing(
-                                title=j.get("title", ""),
-                                company=j.get("company", ""),
-                                location=j.get("location") or location,
-                                salary_range=j.get("salary") or None,
-                                description=(j.get("description") or "")[:5000],
-                                url=j.get("url", ""),
+                                title=title,
+                                company=company,
+                                location=job_location,
+                                salary_range=None,
+                                description=f"{title} at {company} in {job_location}",
+                                url=job_url,
                                 source=self.source_name,
-                                company_logo_url=None,
+                                company_logo_url=logo,
                                 tags=[],
                                 posted_at=None,
                             ))
                             
-                    all_listings = all_listings[:limit]
-                    
-                finally:
-                    await browser.close()
-        except Exception as exc:
-            print(f"[LinkedIn] error: {exc}")
-
+            except Exception as e:
+                print(f"[LinkedIn] Error scraping page {page_num}: {e}")
+                break
+                
+            if len(all_listings) >= limit:
+                break
+                
         logger.info("LinkedIn: %s jobs for %r", len(all_listings), job_title)
         print(f"[LinkedIn] returned {len(all_listings)} jobs")
         return all_listings
 
-    async def _launch(self, pw, PlaywrightError):
-        args = ["--disable-blink-features=AutomationControlled", "--no-sandbox"]
-        try:
-            return await pw.chromium.launch(channel="chrome", headless=True, args=args)
-        except PlaywrightError as exc:
-            print(f"[LinkedIn] Chrome channel unavailable ({exc}); trying bundled Chromium.")
-            try:
-                return await pw.chromium.launch(headless=True, args=args)
-            except PlaywrightError as exc2:
-                raise RuntimeError(
-                    "LinkedIn needs Google Chrome or a Playwright browser. "
-                    f"({exc2})"
-                ) from exc2
