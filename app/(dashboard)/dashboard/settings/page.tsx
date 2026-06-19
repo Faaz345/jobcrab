@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Key, Shield, Loader2, Save, Send, Lock } from "lucide-react";
+import { Mail, Key, Shield, Loader2, Save, Send, Lock, Trash2, Monitor, Moon, Sun, Palette, AlertTriangle } from "lucide-react";
+import { useTheme } from "next-themes";
 import {
   Card,
   CardContent,
@@ -35,6 +36,16 @@ export default function SettingsPage() {
 
   const [dryRun, setDryRun] = useState(true);
   const [maxEmails, setMaxEmails] = useState(10);
+
+  // Theme & Deletion State
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [deleteEmail, setDeleteEmail] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch settings on load
   useEffect(() => {
@@ -172,6 +183,28 @@ export default function SettingsPage() {
       toast.error(`SMTP Test Failed: ${err.message}`);
     } finally {
       setTestingSmtp(false);
+    }
+  };
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteEmail) return;
+    
+    setDeletingAccount(true);
+    try {
+      const res = await fetch("/api/settings/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: deleteEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete account");
+      
+      toast.success("Account deleted. Job backup sent to your email.");
+      window.location.href = "/";
+    } catch (err: any) {
+      toast.error(err.message);
+      setDeletingAccount(false);
     }
   };
 
@@ -422,6 +455,94 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" /> Save Safety Settings
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Appearance / Theme */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" />
+            Appearance
+          </CardTitle>
+          <CardDescription>
+            Customize the look and feel of the platform.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 max-w-lg">
+            <button
+              onClick={() => setTheme("light")}
+              className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${mounted && theme === "light" ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"}`}
+            >
+              <Sun className="h-6 w-6" />
+              <span className="text-sm font-medium">Light</span>
+            </button>
+            <button
+              onClick={() => setTheme("dark")}
+              className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${mounted && theme === "dark" ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"}`}
+            >
+              <Moon className="h-6 w-6" />
+              <span className="text-sm font-medium">Dark</span>
+            </button>
+            <button
+              onClick={() => setTheme("system")}
+              className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${mounted && theme === "system" ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"}`}
+            >
+              <Monitor className="h-6 w-6" />
+              <span className="text-sm font-medium">System</span>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription className="text-destructive/80">
+            Permanently delete your account. All your scraped jobs will be backed up and sent to your email.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleDeleteAccount} className="space-y-4">
+            <div className="space-y-2 max-w-sm">
+              <Label htmlFor="delete-email" className="text-destructive">
+                Type your email to confirm deletion:
+              </Label>
+              <Input
+                id="delete-email"
+                type="email"
+                placeholder="your.email@example.com"
+                value={deleteEmail}
+                onChange={(e) => setDeleteEmail(e.target.value)}
+                className="border-destructive/30 focus-visible:ring-destructive"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={deletingAccount || !deleteEmail}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {deletingAccount ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Processing Deletion...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" /> Delete Account & Backup Jobs
                 </>
               )}
             </Button>

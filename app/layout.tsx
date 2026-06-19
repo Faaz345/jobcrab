@@ -20,18 +20,22 @@ export const metadata: Metadata = {
     "Discover jobs, tailor resumes, and send cold emails — all from one unified platform powered by AI.",
 };
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
-        <Analytics />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>{children}</AuthProvider>
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );

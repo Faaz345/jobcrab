@@ -79,37 +79,36 @@
 }
 
 .dark {
-  /* We maintain the same light theme even if .dark is applied to keep branding consistent */
-  --background: #FBE6D6;
-  --foreground: #2C2417;
-  --card: #FFFFFF;
-  --card-foreground: #2C2417;
-  --popover: #FFFFFF;
-  --popover-foreground: #2C2417;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #09090b;
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
   --primary: #FD101A;
   --primary-foreground: #FFFFFF;
-  --secondary: #F3EDE4;
-  --secondary-foreground: #2C2417;
-  --muted: #F3EDE4;
-  --muted-foreground: #8A7A67;
-  --accent: #F3EDE4;
-  --accent-foreground: #2C2417;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
   --destructive: #FD101A;
-  --border: #E8E0D4;
-  --input: #E8E0D4;
+  --border: #27272a;
+  --input: #27272a;
   --ring: #FD101A;
   --chart-1: #FD101A;
   --chart-2: #E0C6B3;
   --chart-3: #2C2417;
   --chart-4: #8A7A67;
   --chart-5: #F3EDE4;
-  --sidebar: #FBE6D6;
-  --sidebar-foreground: #2C2417;
+  --sidebar: #09090b;
+  --sidebar-foreground: #fafafa;
   --sidebar-primary: #FD101A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F3EDE4;
-  --sidebar-accent-foreground: #2C2417;
-  --sidebar-border: #E8E0D4;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #27272a;
   --sidebar-ring: #FD101A;
 }
 
