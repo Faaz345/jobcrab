@@ -214,6 +214,11 @@ export default function SettingsPage() {
       } else {
         toast.success("Account deleted successfully.");
       }
+      
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      
       window.location.href = "/";
     } catch (err: any) {
       toast.error(err.message);
