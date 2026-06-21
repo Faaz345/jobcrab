@@ -59,6 +59,14 @@ enum AuditAction {
   failed
 }
 
+enum NotificationType {
+  system
+  job
+  response
+  resume
+  email
+}
+
 // ── Models ──
 
 model User {
@@ -86,8 +94,28 @@ model User {
   jobListings    JobListing[]
   applications   Application[]
   auditLogs      AuditLog[]
+  notifications  Notification[]
 
   @@map("users")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType @default(system)
+  title     String
+  message   String           @db.Text
+  link      String?
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model BaseResume {

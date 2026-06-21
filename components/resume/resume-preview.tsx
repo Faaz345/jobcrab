@@ -140,7 +140,7 @@ export function ResumePreview({
       </CardHeader>
       <CardContent>
         {/* Visual Web Preview (just plain text or basic styles to match old behavior, or styled) */}
-        <div className="mx-auto max-w-[800px] rounded-lg border bg-white p-8 shadow-sm prose prose-sm max-w-none text-zinc-800"
+        <div className="mx-auto w-full max-w-[800px] overflow-x-auto rounded-lg border bg-white p-4 sm:p-8 shadow-sm prose prose-sm max-w-none break-words text-zinc-800"
              dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
 

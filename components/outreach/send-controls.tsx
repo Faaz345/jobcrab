@@ -63,11 +63,11 @@ export function SendControls({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
           <Button
             onClick={onSend}
             disabled={sending || skipping || saving}
-            className="flex-1 min-w-[150px] bg-green-600 hover:bg-green-700 text-white"
+            className="w-full sm:flex-1 sm:min-w-[150px] bg-green-600 hover:bg-green-700 text-white"
           >
             {sending ? (
               <>
@@ -84,7 +84,7 @@ export function SendControls({
             variant="outline"
             onClick={onSave}
             disabled={sending || skipping || saving}
-            className="flex-1 min-w-[120px]"
+            className="w-full sm:flex-1 sm:min-w-[120px]"
           >
             {saving ? (
               <>
@@ -101,7 +101,7 @@ export function SendControls({
             variant="ghost"
             onClick={onSkip}
             disabled={sending || skipping || saving}
-            className="flex-1 min-w-[120px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="w-full sm:flex-1 sm:min-w-[120px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             {skipping ? (
               <>

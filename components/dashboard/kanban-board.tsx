@@ -60,7 +60,7 @@ export function KanbanBoard({ initialApps }: { initialApps: AppCard[] }) {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 transition-colors ${
+                  className={`flex w-[80vw] max-w-[18rem] sm:w-72 shrink-0 flex-col rounded-xl border p-3 transition-colors ${
                     snapshot.isDraggingOver
                       ? "border-primary/50 bg-primary/5"
                       : "border-border/50 bg-muted/20"

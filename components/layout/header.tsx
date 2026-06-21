@@ -1,14 +1,11 @@
 "use client";
 
-import { useRef } from "react";
 import { Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "@/components/icons/search";
-import { BellIcon } from "@/components/icons/bell";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
 
 export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
-  const bellIconRef = useRef<any>(null);
-
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 md:px-6 backdrop-blur-md">
       <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -33,14 +30,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Right side actions */}
       <div className="flex items-center gap-3">
-        <button 
-          onMouseEnter={() => bellIconRef.current?.startAnimation?.()}
-          onMouseLeave={() => bellIconRef.current?.stopAnimation?.()}
-          className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <BellIcon ref={bellIconRef} className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-500" />
-        </button>
+        <NotificationsBell />
       </div>
     </header>
   );

@@ -117,7 +117,7 @@ export default async function JobDetailPage({
           <CardTitle className="text-lg">Job Description</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap">
+          <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap break-words">
             {job.description || "No description available."}
           </div>
         </CardContent>

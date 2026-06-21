@@ -59,7 +59,7 @@ export function ResumeEditor({
         </CardHeader>
         <CardContent>
           <div className="max-h-[600px] overflow-y-auto rounded-lg bg-muted/30 p-4">
-            <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-muted-foreground">
+            <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-muted-foreground">
               {originalText}
             </pre>
           </div>

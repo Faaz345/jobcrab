@@ -96,7 +96,7 @@ export function AuditLogTable({ emails, onView }: AuditLogTableProps) {
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
+    <div className="border rounded-lg overflow-x-auto bg-card">
       <Table>
         <TableHeader>
           <TableRow>

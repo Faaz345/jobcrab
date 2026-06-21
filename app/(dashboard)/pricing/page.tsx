@@ -141,7 +141,7 @@ export default function PricingPage() {
           className="text-center space-y-4"
         >
           <div className="flex justify-center mb-2">
-            <Image src="/images/logo.png" alt="JobCrab Logo" width={80} height={80} className="w-16 h-16 object-contain" />
+            <Image src="/images/logo.png" alt="JobCrab Logo" width={1414} height={526} className="h-16 w-auto object-contain" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight">Upgrade your Job Hunt</h1>
           <p className="text-muted-foreground text-lg">Choose the plan that fits your career goals.</p>

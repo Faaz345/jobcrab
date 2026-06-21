@@ -147,9 +147,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
         <Link
           href="/"
           className={cn(
-            "relative flex h-12 items-center overflow-hidden",
+            "relative flex h-14 items-center overflow-hidden",
             BOUNCY,
-            isCollapsed ? "w-12 justify-center" : "w-[142px] justify-start"
+            isCollapsed ? "w-12 justify-center" : "w-44 justify-start"
           )}
           aria-label="JobCrab home"
         >
@@ -160,9 +160,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
             height={526}
             priority
             className={cn(
-              "h-12 w-auto max-w-none object-contain object-left shrink-0 dark:hidden",
+              "h-14 w-auto object-contain object-left shrink-0 dark:hidden",
               BOUNCY,
-              isCollapsed ? "opacity-0 scale-90" : "opacity-100 scale-[1.15] translate-x-3 origin-left"
+              isCollapsed ? "opacity-0" : "opacity-100"
             )}
           />
           <Image
@@ -172,9 +172,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
             height={526}
             priority
             className={cn(
-              "hidden h-12 w-auto max-w-none object-contain object-left shrink-0 dark:block",
+              "hidden h-14 w-auto object-contain object-left shrink-0 dark:block",
               BOUNCY,
-              isCollapsed ? "opacity-0 scale-90" : "opacity-100 scale-[1.15] translate-x-3 origin-left"
+              isCollapsed ? "opacity-0" : "opacity-100"
             )}
           />
           <Image
@@ -183,7 +183,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
             width={821}
             height={556}
             className={cn(
-              "absolute left-1/2 top-1/2 h-10 w-12 -translate-x-1/2 -translate-y-1/2 object-contain",
+              "absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 object-contain",
               BOUNCY,
               isCollapsed ? "opacity-100 scale-100" : "opacity-0 scale-90"
             )}

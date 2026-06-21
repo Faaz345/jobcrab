@@ -116,11 +116,25 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    /* Prevent accidental horizontal scrolling on mobile devices */
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
+
+  /* Media must never overflow its container on small screens */
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
   *::selection {
     background-color: #FD101A;
     color: #fff;
